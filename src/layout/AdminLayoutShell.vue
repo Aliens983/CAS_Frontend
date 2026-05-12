@@ -1,0 +1,177 @@
+<template>
+  <div class="admin-shell">
+    <aside class="sidebar">
+      <div class="sidebar__brand">
+        <div class="sidebar__mark">CAS</div>
+        <div>
+          <strong>Admin Console</strong>
+          <p>校园预约后台</p>
+        </div>
+      </div>
+
+      <button
+        v-for="item in navItems"
+        :key="item.path"
+        class="sidebar__item"
+        :class="{ 'is-active': route.path === item.path }"
+        @click="router.push(item.path)"
+      >
+        {{ item.label }}
+      </button>
+    </aside>
+
+    <div class="workspace">
+      <header class="workspace__header glass-panel">
+        <div>
+          <div class="workspace__title">{{ titleMap[route.path] || '管理后台' }}</div>
+          <div class="workspace__desc">已优先联调后台已有接口，其他未实现接口保留前端结构。</div>
+        </div>
+        <div class="workspace__actions">
+          <el-button plain @click="router.push('/dashboard')">切到用户端</el-button>
+          <el-button @click="logout">退出</el-button>
+        </div>
+      </header>
+
+      <main class="workspace__content">
+        <router-view />
+      </main>
+    </div>
+  </div>
+</template>
+
+<script setup lang="ts">
+import { useRoute, useRouter } from 'vue-router'
+import { useUserStore } from '@/stores/user'
+
+const route = useRoute()
+const router = useRouter()
+const userStore = useUserStore()
+
+const navItems = [
+  { label: '管理驾驶舱', path: '/admin' },
+  { label: '服务治理', path: '/admin/services' },
+  { label: '预约审核', path: '/admin/bookings' },
+  { label: '用户与权限', path: '/admin/users' },
+  { label: '系统设置', path: '/admin/system' },
+]
+
+const titleMap: Record<string, string> = {
+  '/admin': '管理驾驶舱',
+  '/admin/services': '服务治理',
+  '/admin/bookings': '预约审核',
+  '/admin/users': '用户与权限',
+  '/admin/system': '系统设置',
+}
+
+function logout() {
+  userStore.logout()
+  router.push('/login')
+}
+</script>
+
+<style scoped lang="scss">
+.admin-shell {
+  min-height: 100vh;
+  display: grid;
+  grid-template-columns: 272px 1fr;
+}
+
+.sidebar {
+  padding: 20px 16px;
+  background: linear-gradient(180deg, #0f172a, #132949 52%, #10264e);
+  color: #fff;
+}
+
+.sidebar__brand {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 24px;
+  padding: 8px;
+}
+
+.sidebar__mark {
+  width: 44px;
+  height: 44px;
+  display: grid;
+  place-items: center;
+  border-radius: 14px;
+  background: linear-gradient(135deg, #4d95ff, #1458d4);
+  font-weight: 800;
+}
+
+.sidebar__brand p {
+  margin: 4px 0 0;
+  color: rgba(255, 255, 255, 0.68);
+  font-size: 12px;
+}
+
+.sidebar__item {
+  width: 100%;
+  margin-bottom: 10px;
+  padding: 14px 16px;
+  text-align: left;
+  color: rgba(255, 255, 255, 0.82);
+  border: 0;
+  border-radius: 16px;
+  background: transparent;
+  cursor: pointer;
+}
+
+.sidebar__item.is-active {
+  color: #fff;
+  background: rgba(84, 160, 255, 0.18);
+}
+
+.workspace {
+  padding: 16px 18px 24px;
+}
+
+.workspace__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 16px 18px;
+  border-radius: 24px;
+}
+
+.workspace__title {
+  font-size: 20px;
+  font-weight: 700;
+}
+
+.workspace__desc {
+  margin-top: 4px;
+  color: var(--text-secondary);
+  font-size: 13px;
+}
+
+.workspace__actions {
+  display: flex;
+  gap: 10px;
+}
+
+.workspace__content {
+  margin-top: 18px;
+}
+
+@media (max-width: 960px) {
+  .admin-shell {
+    grid-template-columns: 1fr;
+  }
+
+  .sidebar {
+    display: none;
+  }
+
+  .workspace {
+    padding: 12px;
+  }
+
+  .workspace__header {
+    flex-direction: column;
+    align-items: stretch;
+  }
+}
+</style>
