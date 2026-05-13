@@ -66,12 +66,12 @@ async function submit() {
 
   loading.value = true
   try {
-    const registerResult = await userService.register(form.username, form.email, form.password)
+    const registerResult = await userService.register(form.username, form.email, form.password, '')
     const token = extractToken(registerResult)
 
     if (token) {
       userStore.setToken(token)
-      const infoPayload = await userService.getInfo().catch(() => registerResult)
+      const infoPayload = await (userService as any).getInfo?.().catch(() => registerResult)
       const normalized = normalizeUserInfo(infoPayload)
       userStore.setUserInfo({
         ...normalized,

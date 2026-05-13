@@ -1,8 +1,10 @@
 import { createRouter, createWebHistory, type RouteRecordRaw } from 'vue-router'
-import { useUserStore } from '@/stores/user'
-import { resolveHomeByRole } from '@/utils/auth'
+import { useUserStore } from '@/common/stores/user'
+import { resolveHomeByRole } from '@/common/utils/auth'
+import { userRoutes } from '@/modules/user/router'
+import { adminRoutes } from '@/modules/admin/router'
 
-const lazyModules = import.meta.glob(['../views/**/*.vue', '../layout/*.vue'])
+const lazyModules = import.meta.glob(['../modules/**/*.vue', '../layout/*.vue'])
 let prefetched = false
 
 function warmRouteChunks() {
@@ -44,95 +46,8 @@ const routes: RouteRecordRaw[] = [
     component: () => import('@/views/auth/RegisterPage.vue'),
     meta: { title: '注册', requiresAuth: false, audience: 'guest' },
   },
-  {
-    path: '/',
-    component: () => import('@/layout/UserLayoutShell.vue'),
-    meta: { requiresAuth: true },
-    children: [
-      {
-        path: 'dashboard',
-        component: () => import('@/views/dashboard/HomeView.vue'),
-        meta: { title: '工作台', requiresAuth: true, audience: 'user' },
-      },
-      {
-        path: 'services',
-        component: () => import('@/views/services/ServiceCenterView.vue'),
-        meta: { title: '服务中心', requiresAuth: true, audience: 'user' },
-      },
-      {
-        path: 'service/:id',
-        component: () => import('@/views/services/Detail.vue'),
-        meta: { title: '服务详情', requiresAuth: true, audience: 'user' },
-      },
-      {
-        path: 'rooms',
-        component: () => import('@/views/rooms/Index.vue'),
-        meta: { title: '会议室预约', requiresAuth: true, audience: 'user' },
-      },
-      {
-        path: 'equipment',
-        component: () => import('@/views/equipment/Index.vue'),
-        meta: { title: '设备借用', requiresAuth: true, audience: 'user' },
-      },
-      {
-        path: 'consultation',
-        component: () => import('@/views/consultation/Index.vue'),
-        meta: { title: '咨询服务', requiresAuth: true, audience: 'user' },
-      },
-      {
-        path: 'bookings',
-        component: () => import('@/views/bookings/BookingListView.vue'),
-        meta: { title: '我的预约', requiresAuth: true, audience: 'user' },
-      },
-      {
-        path: 'bookings/:id',
-        component: () => import('@/views/bookings/Detail.vue'),
-        meta: { title: '预约详情', requiresAuth: true, audience: 'user' },
-      },
-      {
-        path: 'messages',
-        component: () => import('@/views/messages/Index.vue'),
-        meta: { title: '消息中心', requiresAuth: true },
-      },
-      {
-        path: 'profile',
-        component: () => import('@/views/profile/ProfileView.vue'),
-        meta: { title: '个人中心', requiresAuth: true },
-      },
-    ],
-  },
-  {
-    path: '/admin',
-    component: () => import('@/layout/AdminLayoutShell.vue'),
-    meta: { requiresAuth: true, requiresAdmin: true },
-    children: [
-      {
-        path: '',
-        component: () => import('@/views/admin/AdminHomeView.vue'),
-        meta: { title: '管理驾驶舱', requiresAuth: true, requiresAdmin: true },
-      },
-      {
-        path: 'services',
-        component: () => import('@/views/admin/ServiceManage.vue'),
-        meta: { title: '服务治理', requiresAuth: true, requiresAdmin: true },
-      },
-      {
-        path: 'bookings',
-        component: () => import('@/views/admin/BookingManage.vue'),
-        meta: { title: '预约审核', requiresAuth: true, requiresAdmin: true },
-      },
-      {
-        path: 'users',
-        component: () => import('@/views/admin/UserManage.vue'),
-        meta: { title: '用户与权限', requiresAuth: true, requiresAdmin: true },
-      },
-      {
-        path: 'system',
-        component: () => import('@/views/admin/SystemManage.vue'),
-        meta: { title: '系统设置', requiresAuth: true, requiresAdmin: true },
-      },
-    ],
-  },
+  ...userRoutes,
+  ...adminRoutes,
   {
     path: '/:pathMatch(.*)*',
     component: () => import('@/views/errors/NotFound.vue'),
@@ -148,10 +63,6 @@ const router = createRouter({
 
 router.beforeEach((to, _from, next) => {
   const userStore = useUserStore()
-
-  if (import.meta.env.DEV && !userStore.isLogin && to.meta.requiresAuth) {
-    userStore.bootstrapDevUser()
-  }
 
   if (to.meta.requiresAuth && !userStore.isLogin) {
     next('/login')

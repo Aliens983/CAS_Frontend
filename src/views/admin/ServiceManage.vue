@@ -96,8 +96,9 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref } from 'vue'
-import { services } from '@/mock/campus-data'
+import { computed, ref, onMounted } from 'vue'
+import { ElMessage } from 'element-plus'
+import { fetchServiceCards } from '@/services/campus'
 import type { ServiceCard } from '@/types'
 
 const createDrawer = ref(false)
@@ -107,16 +108,18 @@ const overviewVisible = ref(false)
 const overviewTitle = ref('')
 const overviewItems = ref<string[]>([])
 const selectedService = ref<ServiceCard | null>(null)
+const services = ref<ServiceCard[]>([])
+const loading = ref(false)
 
 const filteredServices = computed(() =>
-  services.filter((item) => {
+  services.value.filter((item) => {
     const matchKeyword = !keyword.value || [item.name, item.category, item.location].join('|').toLowerCase().includes(keyword.value.toLowerCase())
     const matchStatus = !statusFilter.value || item.status === statusFilter.value
     return matchKeyword && matchStatus
   }),
 )
-const availableCount = computed(() => services.filter((item) => item.status === 'available').length)
-const maintenanceCount = computed(() => services.filter((item) => item.status !== 'available').length)
+const availableCount = computed(() => services.value.filter((item) => item.status === 'available').length)
+const maintenanceCount = computed(() => services.value.filter((item) => item.status !== 'available').length)
 const serviceDrawerVisible = computed({
   get: () => Boolean(selectedService.value),
   set: (value: boolean) => {
@@ -124,11 +127,23 @@ const serviceDrawerVisible = computed({
   },
 })
 
+onMounted(async () => {
+  loading.value = true
+  try {
+    services.value = await fetchServiceCards()
+  } catch (error: unknown) {
+    const err = error as { message?: string }
+    ElMessage.error(err.message || '获取服务列表失败')
+  } finally {
+    loading.value = false
+  }
+})
+
 function openOverview(mode: 'all' | 'available' | 'maintenance') {
   const mapping = {
-    all: { title: '服务总览', items: services.map((item) => `${item.name} / ${item.category}`) },
-    available: { title: '可用服务', items: services.filter((item) => item.status === 'available').map((item) => item.name) },
-    maintenance: { title: '维护中服务', items: services.filter((item) => item.status !== 'available').map((item) => item.name) },
+    all: { title: '服务总览', items: services.value.map((item) => `${item.name} / ${item.category}`) },
+    available: { title: '可用服务', items: services.value.filter((item) => item.status === 'available').map((item) => item.name) },
+    maintenance: { title: '维护中服务', items: services.value.filter((item) => item.status !== 'available').map((item) => item.name) },
   }
   overviewTitle.value = mapping[mode].title
   overviewItems.value = mapping[mode].items

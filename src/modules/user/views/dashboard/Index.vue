@@ -16,17 +16,13 @@
 
       <div class="dashboard-hero__panel">
         <div class="hero-panel__label">今日安排</div>
-        <div class="hero-panel__item" @click="router.push('/bookings/401')">
-          <strong>14:00 - 16:00</strong>
-          <span>创新中心 A301 项目评审会，提前 15 分钟签到。</span>
+        <div v-for="item in todayBookings" :key="item.id" class="hero-panel__item" @click="router.push(`/bookings/${item.id}`)">
+          <strong>{{ item.timeRange }}</strong>
+          <span>{{ item.serviceName }} / {{ item.location }}</span>
         </div>
-        <div class="hero-panel__item" @click="router.push('/messages')">
-          <strong>16:30 - 17:00</strong>
-          <span>设备借用审核结果已回传，可进入消息中心查看详情。</span>
-        </div>
-        <div class="hero-panel__item" @click="router.push('/equipment')">
-          <strong>18:00 前</strong>
-          <span>归还 4K 投影仪，并完成借用确认闭环。</span>
+        <div v-if="todayBookings.length === 0" class="hero-panel__item">
+          <strong>暂无安排</strong>
+          <span>今天没有预约事务</span>
         </div>
       </div>
     </section>
@@ -122,7 +118,7 @@
             </div>
           </template>
           <div class="booking-stack">
-            <div v-for="item in bookings" :key="item.id" class="booking-card" @click="router.push(`/bookings/${item.id}`)">
+            <div v-for="item in recentBookings" :key="item.id" class="booking-card" @click="router.push(`/bookings/${item.id}`)">
               <div>
                 <strong>{{ item.serviceName }}</strong>
                 <p>{{ item.date }} {{ item.timeRange }}</p>
@@ -167,8 +163,8 @@
 import { computed, ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
-import { fetchBookingRecords, fetchServiceCards } from '@/services/campus'
-import type { BookingRecord, BookingStatus, DashboardStat, ServiceCard } from '@/types'
+import { fetchBookingRecords, fetchServiceCards } from '@/common/campus'
+import type { BookingRecord, BookingStatus, DashboardStat, ServiceCard } from '@/common/types'
 
 const router = useRouter()
 const metricDialogVisible = ref(false)
@@ -193,30 +189,17 @@ onMounted(async () => {
   }
 })
 
-const shortcuts = [
-  { title: '会议室预约', desc: '空间资源与时段申请', path: '/rooms', abbr: 'MR', tone: 'tone-blue' },
-  { title: '设备借用', desc: '借还流程与库存状态', path: '/equipment', abbr: 'EQ', tone: 'tone-teal' },
-  { title: '咨询服务', desc: '顾问资源与时间排班', path: '/consultation', abbr: 'CS', tone: 'tone-amber' },
-  { title: '我的预约', desc: '记录查询与审批进度', path: '/bookings', abbr: 'BK', tone: 'tone-slate' },
-]
-
-const todoList = [
-  { title: '设备借用待确认', desc: '4K 投影仪借用申请已提交，等待设备中心确认。', badge: '处理中', tone: 'is-warning', path: '/bookings/402' },
-  { title: '咨询时段即将开放', desc: '就业指导周三新增晚间时段，建议尽快锁定。', badge: '可预约', tone: 'is-brand', path: '/consultation' },
-  { title: '会议室使用提醒', desc: '今天 13:45 前到场签到，避免预约被自动释放。', badge: '即将开始', tone: 'is-danger', path: '/rooms' },
-]
-
-const serviceDrawerVisible = computed({
-  get: () => Boolean(activeService.value),
-  set: (value: boolean) => {
-    if (!value) activeService.value = null
-  },
+const todayBookings = computed(() => {
+  const today = new Date().toISOString().slice(0, 10)
+  return bookings.value.filter((b: BookingRecord) => b.date === today).slice(0, 3)
 })
+
+const recentBookings = computed(() => bookings.value.slice(0, 5))
 
 const dashboardStats = computed<DashboardStat[]>(() => {
   const total = bookings.value.length
-  const pending = bookings.value.filter(b => b.status === 'pending').length
-  const completed = bookings.value.filter(b => b.status === 'completed').length
+  const pending = bookings.value.filter((b: BookingRecord) => b.status === 'pending').length
+  const completed = bookings.value.filter((b: BookingRecord) => b.status === 'completed').length
 
   return [
     { label: '本月预约量', value: String(total), trend: total > 0 ? '正增长' : '暂无数据', tone: total > 0 ? 'success' : 'warning' },
@@ -226,12 +209,34 @@ const dashboardStats = computed<DashboardStat[]>(() => {
   ]
 })
 
+const shortcuts = [
+  { title: '会议室预约', desc: '空间资源与时段申请', path: '/rooms', abbr: 'MR', tone: 'tone-blue' },
+  { title: '设备借用', desc: '借还流程与库存状态', path: '/equipment', abbr: 'EQ', tone: 'tone-teal' },
+  { title: '咨询服务', desc: '顾问资源与时间排班', path: '/consultation', abbr: 'CS', tone: 'tone-amber' },
+  { title: '我的预约', desc: '记录查询与审批进度', path: '/bookings', abbr: 'BK', tone: 'tone-slate' },
+]
+
+const todoList = computed(() => {
+  const pendingBookings = bookings.value.filter((b: BookingRecord) => b.status === 'pending')
+  return [
+    { title: '待审核预约', desc: `${pendingBookings.length} 条预约申请等待审核，请及时关注。`, badge: pendingBookings.length > 0 ? '待处理' : '已清空', tone: pendingBookings.length > 0 ? 'is-warning' : 'is-success', path: '/bookings' },
+    { title: '咨询时段提醒', desc: '就业指导新增晚间时段，建议尽快锁定。', badge: '可预约', tone: 'is-brand', path: '/consultation' },
+  ]
+})
+
+const serviceDrawerVisible = computed({
+  get: () => Boolean(activeService.value),
+  set: (value: boolean) => {
+    if (!value) activeService.value = null
+  },
+})
+
 function openMetricDetail(label: string) {
   const mapping: Record<string, string[]> = {
-    本月预约量: ['会议室预约 612 单', '设备借用 384 单', '咨询服务 290 单'],
-    待审核事项: ['设备借用待审核 9 条', '会议室申请待审核 8 条', '咨询申请待审核 6 条'],
-    资源完单率: ['会议室按时完结率 98.1%', '设备归还闭环率 95.3%', '咨询履约率 96.2%'],
-    异常工单: ['会议室超时释放 2 条', '设备库存差异 3 条', '通知补发记录 2 条'],
+    本月预约量: [`总预约 ${bookings.value.length} 单`, `已完成 ${bookings.value.filter(b => b.status === 'completed').length} 单`, `进行中 ${bookings.value.filter(b => b.status === 'approved').length} 单`],
+    待审核事项: [`${bookings.value.filter(b => b.status === 'pending').length} 条待审核`, '请及时关注审批进度'],
+    已完成: [`本月完成 ${bookings.value.filter(b => b.status === 'completed').length} 单`],
+    资源完单率: ['根据实际预约完成情况统计', '持续优化使用体验'],
   }
   metricDialogTitle.value = label
   metricDialogItems.value = mapping[label] || ['暂无明细']
@@ -305,60 +310,60 @@ function statusText(status: BookingStatus) {
   background: rgba(255, 255, 255, 0.14);
 }
 
-.dashboard-hero h1 {
-  margin: 16px 0 10px;
-  font-size: 38px;
-  line-height: 1.15;
+.dashboard-hero__main h1 {
+  font-size: 26px;
+  font-weight: 700;
+  line-height: 1.3;
+  margin: 12px 0 10px;
 }
 
-.dashboard-hero p {
-  max-width: 720px;
-  margin: 0;
-  line-height: 1.82;
-  color: rgba(255, 255, 255, 0.84);
+.dashboard-hero__main p {
+  font-size: 14px;
+  opacity: 0.85;
+  line-height: 1.6;
 }
 
 .hero-actions {
   display: flex;
   gap: 12px;
-  margin-top: 24px;
+  margin-top: 20px;
 }
 
 .dashboard-hero__panel {
   display: grid;
   gap: 12px;
-  padding: 22px;
-  border-radius: 24px;
-  background: rgba(255, 255, 255, 0.12);
-  border: 1px solid rgba(255, 255, 255, 0.12);
-  backdrop-filter: blur(10px);
+  padding: 24px;
+  border-radius: 20px;
+  background: rgba(255, 255, 255, 0.08);
 }
 
 .hero-panel__label {
   font-size: 13px;
-  color: rgba(255, 255, 255, 0.7);
+  opacity: 0.7;
+  margin-bottom: 4px;
 }
 
 .hero-panel__item {
-  display: grid;
-  gap: 6px;
-  padding: 15px 16px;
-  border-radius: 18px;
-  background: rgba(255, 255, 255, 0.08);
+  padding: 12px;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.06);
   cursor: pointer;
-  transition: transform 0.24s ease, background-color 0.24s ease, border-color 0.24s ease;
-  border: 1px solid transparent;
+  transition: background 0.2s;
 }
 
 .hero-panel__item:hover {
-  transform: translateX(6px);
-  background: rgba(255, 255, 255, 0.14);
-  border-color: rgba(255, 255, 255, 0.12);
+  background: rgba(255, 255, 255, 0.12);
+}
+
+.hero-panel__item strong {
+  display: block;
+  font-size: 14px;
+  margin-bottom: 4px;
 }
 
 .hero-panel__item span {
-  color: rgba(255, 255, 255, 0.82);
-  line-height: 1.6;
+  font-size: 12px;
+  opacity: 0.7;
 }
 
 .metric-grid {
@@ -370,25 +375,25 @@ function statusText(status: BookingStatus) {
 .metric-card {
   position: relative;
   display: grid;
-  gap: 12px;
+  gap: 8px;
   padding: 22px;
   border-radius: 22px;
-  background: rgba(255, 255, 255, 0.92);
+  background: rgba(255,255,255,.92);
   border: 1px solid var(--border-soft);
   box-shadow: var(--shadow-card);
   overflow: hidden;
   cursor: pointer;
-  transition: transform 0.26s ease, box-shadow 0.26s ease;
+  transition: transform .26s ease, box-shadow .26s ease;
 }
 
 .metric-card::after {
-  content: "";
+  content: '';
   position: absolute;
-  inset: auto -30px -30px auto;
-  width: 110px;
-  height: 110px;
+  inset: auto -24px -24px auto;
+  width: 92px;
+  height: 92px;
   border-radius: 50%;
-  background: radial-gradient(circle, rgba(20, 88, 212, 0.08), rgba(20, 88, 212, 0));
+  background: radial-gradient(circle, rgba(20,88,212,.08), rgba(20,88,212,0));
 }
 
 .metric-card:hover {
@@ -397,22 +402,24 @@ function statusText(status: BookingStatus) {
 }
 
 .metric-card__label {
-  color: var(--text-secondary);
   font-size: 13px;
+  color: var(--text-secondary);
 }
 
 .metric-card__value {
   font-size: 34px;
-  line-height: 1;
+  font-weight: 700;
+  color: var(--text-primary);
 }
 
 .metric-card__trend {
-  justify-self: start;
+  font-size: 12px;
+  width: fit-content;
 }
 
 .dashboard-grid {
   display: grid;
-  grid-template-columns: 1.35fr 0.85fr;
+  grid-template-columns: 1.6fr 1fr;
   gap: 20px;
 }
 
@@ -420,234 +427,284 @@ function statusText(status: BookingStatus) {
 .dashboard-grid__side {
   display: grid;
   gap: 20px;
+  align-content: start;
 }
 
 .surface-card {
-  border: 1px solid var(--border-soft);
   border-radius: 24px;
   box-shadow: var(--shadow-card);
 }
 
 .card-head {
   display: flex;
-  align-items: center;
   justify-content: space-between;
-  gap: 16px;
+  align-items: center;
 }
 
-.card-head h3,
-.card-head p {
-  margin: 0;
+.card-head h3 {
+  font-size: 17px;
+  font-weight: 600;
 }
 
 .card-head p {
-  margin-top: 4px;
-  color: var(--text-secondary);
   font-size: 13px;
+  color: var(--text-secondary);
+  margin-top: 2px;
 }
 
 .shortcut-grid {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
-  gap: 14px;
+  gap: 12px;
 }
 
 .shortcut-card {
   position: relative;
   display: grid;
-  gap: 12px;
-  padding: 18px;
-  text-align: left;
+  gap: 8px;
+  padding: 18px 14px;
+  border-radius: 18px;
   border: 1px solid var(--border-soft);
-  border-radius: 20px;
   background: linear-gradient(180deg, #fff, #f8fbff);
   cursor: pointer;
+  transition: transform .24s ease, box-shadow .24s ease;
   overflow: hidden;
-  transition: transform 0.28s cubic-bezier(0.22, 1, 0.36, 1), box-shadow 0.28s ease, border-color 0.28s ease;
 }
 
 .shortcut-card:hover {
-  transform: translateY(-8px);
-  border-color: rgba(20, 88, 212, 0.16);
-  box-shadow: 0 22px 36px rgba(20, 33, 61, 0.12);
+  transform: translateY(-4px);
+  box-shadow: 0 16px 28px rgba(20,33,61,.1);
 }
 
 .shortcut-card__orb {
   position: absolute;
-  top: -24px;
-  right: -24px;
-  width: 90px;
-  height: 90px;
+  top: -12px;
+  right: -12px;
+  width: 60px;
+  height: 60px;
   border-radius: 50%;
-  background: radial-gradient(circle, rgba(20, 88, 212, 0.1), rgba(20, 88, 212, 0));
-  transition: transform 0.28s ease;
+  background: linear-gradient(135deg, rgba(20,88,212,.06), transparent);
 }
 
-.shortcut-card:hover .shortcut-card__orb {
-  transform: scale(1.18);
-}
-
-.shortcut-card strong,
-.shortcut-card span,
 .shortcut-card__icon {
-  position: relative;
-  z-index: 1;
-}
-
-.shortcut-card strong {
+  width: 40px;
+  height: 40px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
   font-size: 16px;
 }
 
-.shortcut-card span {
-  color: var(--text-secondary);
+.tone-blue { background: linear-gradient(135deg, #e0f2fe, #bae6fd); color: #0284c7; }
+.tone-teal { background: linear-gradient(135deg, #ccfbf1, #99f6e4); color: #0d9488; }
+.tone-amber { background: linear-gradient(135deg, #fef3c7, #fde68a); color: #d97706; }
+.tone-slate { background: linear-gradient(135deg, #f1f5f9, #e2e8f0); color: #475569; }
+
+.shortcut-card strong {
   font-size: 13px;
-  line-height: 1.6;
+  font-weight: 600;
 }
 
-.shortcut-card__icon {
-  width: 46px;
-  height: 46px;
-  display: grid;
-  place-items: center;
-  border-radius: 16px;
-  color: #fff;
-  font-weight: 700;
-  transition: transform 0.28s ease;
-}
-
-.shortcut-card:hover .shortcut-card__icon {
-  transform: scale(1.08) rotate(-6deg);
-}
-
-.tone-blue {
-  background: linear-gradient(135deg, #1458d4, #4c98ff);
-}
-
-.tone-teal {
-  background: linear-gradient(135deg, #0f766e, #2dd4bf);
-}
-
-.tone-amber {
-  background: linear-gradient(135deg, #b45309, #f6ad55);
-}
-
-.tone-slate {
-  background: linear-gradient(135deg, #334155, #94a3b8);
+.shortcut-card span {
+  font-size: 11px;
+  color: var(--text-secondary);
 }
 
 .service-grid {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
-  gap: 16px;
+  gap: 14px;
 }
 
 .service-card {
-  overflow: hidden;
+  display: flex;
+  gap: 14px;
+  padding: 16px;
+  border-radius: 16px;
   border: 1px solid var(--border-soft);
-  border-radius: 22px;
   background: linear-gradient(180deg, #fff, #f8fbff);
   cursor: pointer;
-  transition: transform 0.28s cubic-bezier(0.22, 1, 0.36, 1), box-shadow 0.28s ease;
+  transition: transform .24s ease, box-shadow .24s ease;
 }
 
 .service-card:hover {
-  transform: translateY(-6px);
-  box-shadow: 0 22px 36px rgba(20, 33, 61, 0.12);
+  transform: translateY(-4px);
+  box-shadow: 0 16px 28px rgba(20,33,61,.1);
 }
 
 .service-card__cover {
-  min-height: 90px;
-  display: grid;
-  place-items: center;
-  color: #fff;
+  width: 52px;
+  height: 52px;
+  border-radius: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
   font-weight: 700;
-  position: relative;
-  overflow: hidden;
+  color: #fff;
+  flex-shrink: 0;
 }
 
-.service-card__cover::after {
-  content: "";
-  position: absolute;
-  inset: -40% auto auto -10%;
-  width: 40%;
-  height: 200%;
-  background: linear-gradient(180deg, rgba(255, 255, 255, 0.28), rgba(255, 255, 255, 0));
-  transform: rotate(24deg);
-  animation: serviceLight 6.2s ease-in-out infinite;
-}
+.gradient-brand { background: linear-gradient(135deg, #667eea, #764ba2); }
+.gradient-teal { background: linear-gradient(135deg, #11998e, #38ef7d); }
+.gradient-amber { background: linear-gradient(135deg, #f093fb, #f5576c); }
+.gradient-slate { background: linear-gradient(135deg, #4b6cb7, #182848); }
 
 .service-card__content {
-  padding: 18px;
+  flex: 1;
+  min-width: 0;
 }
 
 .service-card__head {
   display: flex;
-  align-items: center;
   justify-content: space-between;
-  gap: 12px;
+  align-items: flex-start;
+  gap: 8px;
+}
+
+.service-card__head strong {
+  font-size: 14px;
+  font-weight: 600;
 }
 
 .service-card__content p {
-  min-height: 44px;
+  font-size: 12px;
   color: var(--text-secondary);
-  line-height: 1.7;
+  margin-top: 4px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .service-card__meta {
   display: flex;
-  justify-content: space-between;
   gap: 12px;
-  color: var(--text-tertiary);
-  font-size: 12px;
+  margin-top: 8px;
+  font-size: 11px;
+  color: var(--text-secondary);
 }
 
-.todo-stack,
-.booking-stack {
+.todo-stack {
   display: grid;
-  gap: 14px;
+  gap: 12px;
 }
 
-.todo-card,
-.booking-card {
+.todo-card {
   display: flex;
   justify-content: space-between;
-  gap: 14px;
-  padding: 16px;
-  border-radius: 18px;
+  align-items: center;
+  gap: 12px;
+  padding: 14px;
+  border-radius: 14px;
   border: 1px solid var(--border-soft);
   background: linear-gradient(180deg, #fff, #f8fbff);
   cursor: pointer;
-  transition: transform 0.24s ease, box-shadow 0.24s ease;
+  transition: transform .2s ease;
 }
 
-.todo-card:hover,
-.booking-card:hover {
-  transform: translateY(-4px);
-  box-shadow: 0 18px 28px rgba(20, 33, 61, 0.1);
+.todo-card:hover {
+  transform: translateX(4px);
 }
 
-.todo-card p,
-.booking-card p {
-  margin: 6px 0 0;
-  color: var(--text-secondary);
+.todo-card__main {
+  flex: 1;
+}
+
+.todo-card__main strong {
   font-size: 13px;
+  font-weight: 600;
+}
+
+.todo-card__main p {
+  font-size: 11px;
+  color: var(--text-secondary);
+  margin-top: 2px;
 }
 
 .todo-card__badge {
-  height: fit-content;
+  font-size: 11px;
+  padding: 4px 10px;
+  border-radius: 999px;
 }
 
-.detail-dialog__body,
-.drawer-stack {
+.booking-stack {
   display: grid;
+  gap: 10px;
+}
+
+.booking-card {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
   gap: 12px;
+  padding: 12px;
+  border-radius: 12px;
+  border: 1px solid var(--border-soft);
+  background: linear-gradient(180deg, #fff, #f8fbff);
+  cursor: pointer;
+  transition: transform .2s ease;
+}
+
+.booking-card:hover {
+  transform: translateX(4px);
+}
+
+.booking-card strong {
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.booking-card p {
+  font-size: 11px;
+  color: var(--text-secondary);
+  margin-top: 2px;
+}
+
+.detail-dialog__body {
+  display: grid;
+  gap: 10px;
 }
 
 .detail-dialog__item {
-  padding: 14px 16px;
-  border-radius: 16px;
+  padding: 12px;
+  border-radius: 10px;
   background: linear-gradient(180deg, #fff, #f8fbff);
   border: 1px solid var(--border-soft);
+  font-size: 13px;
+}
+
+.drawer-stack {
+  display: grid;
+  gap: 16px;
+}
+
+.cover-badge {
+  width: 64px;
+  height: 64px;
+  border-radius: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+  font-weight: 700;
+  color: #fff;
+}
+
+.info-list {
+  display: grid;
+  gap: 10px;
+}
+
+.info-row {
+  display: flex;
+  justify-content: space-between;
+  font-size: 13px;
+}
+
+.info-row span {
+  color: var(--text-secondary);
 }
 
 .tag-wrap {
@@ -657,51 +714,7 @@ function statusText(status: BookingStatus) {
 }
 
 @keyframes dashboardHalo {
-  0%,
-  100% {
-    transform: translate3d(0, 0, 0) scale(1);
-  }
-  50% {
-    transform: translate3d(-22px, -14px, 0) scale(1.1);
-  }
-}
-
-@keyframes serviceLight {
-  0%,
-  100% {
-    transform: translateX(-10%) rotate(24deg);
-  }
-  50% {
-    transform: translateX(180%) rotate(24deg);
-  }
-}
-
-@media (max-width: 1200px) {
-  .metric-grid {
-    grid-template-columns: repeat(2, 1fr);
-  }
-
-  .dashboard-grid,
-  .dashboard-hero {
-    grid-template-columns: 1fr;
-  }
-
-  .shortcut-grid {
-    grid-template-columns: repeat(2, 1fr);
-  }
-}
-
-@media (max-width: 760px) {
-  .metric-grid,
-  .shortcut-grid,
-  .service-grid {
-    grid-template-columns: 1fr;
-  }
-
-  .hero-actions,
-  .todo-card,
-  .booking-card {
-    flex-direction: column;
-  }
+  0%,100% { transform: translate(0, 0) scale(1); }
+  50% { transform: translate(-20px, 20px) scale(1.08); }
 }
 </style>

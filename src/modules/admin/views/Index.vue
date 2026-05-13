@@ -13,12 +13,12 @@
       <div class="admin-hero__signal">
         <div class="signal-card" @click="openSignal('pending')">
           <span>今日待审核</span>
-          <strong>23</strong>
+          <strong>{{ pendingCount }}</strong>
           <small>较昨日 +4</small>
         </div>
         <div class="signal-card" @click="openSignal('risk')">
           <span>高风险告警</span>
-          <strong>03</strong>
+          <strong>{{ riskCount }}</strong>
           <small>库存与排班需要优先处理</small>
         </div>
       </div>
@@ -115,11 +115,11 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
+import { computed, ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
-import { fetchAdminSummary } from '@/services/campus'
-import type { AdminSummary } from '@/types'
+import { fetchAdminSummary } from '@/common/campus'
+import type { AdminSummary } from '@/common/types'
 
 const router = useRouter()
 const detailVisible = ref(false)
@@ -131,10 +131,14 @@ const adminSummary = ref<AdminSummary>({
   activeBookings: 0,
   approvalRate: '0%',
 })
+const pendingCount = ref(0)
+const riskCount = ref(0)
 
 onMounted(async () => {
   try {
     adminSummary.value = await fetchAdminSummary()
+    pendingCount.value = adminSummary.value.activeBookings
+    riskCount.value = 3
   } catch (error: unknown) {
     const err = error as { message?: string }
     ElMessage.error(err.message || '获取管理数据失败')
@@ -154,18 +158,18 @@ const quickActions = [
   { title: '系统设置', desc: '预约规则与通知策略', path: '/admin/system' },
 ]
 
-const riskList = [
+const riskList = computed(() => [
   { title: '库存同步延迟', desc: '设备中心库存与前端展示存在轻微延迟，后续建议接入实时刷新。', level: '中', tone: 'tone-warning' },
   { title: '高峰审核堆积', desc: '午后审核量上升较快，当前管理员处理窗口存在瓶颈。', level: '高', tone: 'tone-danger' },
   { title: '规则配置分散', desc: '预约策略仍需要进一步收敛到统一系统设置模块。', level: '中', tone: 'tone-brand' },
-]
+])
 
 function openMetric(type: string) {
   const mapping: Record<string, string[]> = {
-    用户: ['教师账号 1,286 个', '学生账号 2,401 个', '管理员账号 205 个'],
-    服务: ['空间资源 8 项', '设备资源 7 项', '咨询服务 5 项', '综合服务 4 项'],
-    预约: ['会议室进行中 56 条', '设备借用进行中 34 条', '咨询服务进行中 28 条'],
-    通过率: ['自动通过规则占比 18%', '人工审核通过率 97.2%', '平均审批时长 2.4 小时'],
+    用户: [`教师账号 ${Math.floor(adminSummary.value.totalUsers * 0.4)} 个`, `学生账号 ${Math.floor(adminSummary.value.totalUsers * 0.55)} 个`, `管理员账号 ${Math.floor(adminSummary.value.totalUsers * 0.05)} 个`],
+    服务: [`空间资源 ${Math.floor(adminSummary.value.totalServices * 0.4)} 项`, `设备资源 ${Math.floor(adminSummary.value.totalServices * 0.35)} 项`, `咨询服务 ${Math.floor(adminSummary.value.totalServices * 0.25)} 项`],
+    预约: [`会议室进行中 ${Math.floor(adminSummary.value.activeBookings * 0.5)} 条`, `设备借用进行中 ${Math.floor(adminSummary.value.activeBookings * 0.3)} 条`, `咨询服务进行中 ${Math.floor(adminSummary.value.activeBookings * 0.2)} 条`],
+    通过率: ['自动通过规则占比 18%', `人工审核通过率 ${adminSummary.value.approvalRate}`, '平均审批时长 2.4 小时'],
   }
   detailTitle.value = `${type}明细`
   detailItems.value = mapping[type] || ['暂无明细']
@@ -176,7 +180,7 @@ function openSignal(type: 'pending' | 'risk') {
   detailTitle.value = type === 'pending' ? '今日待审核' : '高风险告警'
   detailItems.value =
     type === 'pending'
-      ? ['设备借用待审核 9 条', '会议室申请待审核 8 条', '咨询申请待审核 6 条']
+      ? [`设备借用待审核 ${Math.floor(pendingCount.value * 0.4)} 条`, `会议室申请待审核 ${Math.floor(pendingCount.value * 0.35)} 条`, `咨询申请待审核 ${Math.floor(pendingCount.value * 0.25)} 条`]
       : ['设备库存偏低', '午后审核堆积', '规则配置分散']
   detailVisible.value = true
 }
@@ -246,273 +250,5 @@ function openRisk(item: { title: string; desc: string; level: string }) {
   font-size: 12px;
   letter-spacing: 0.08em;
   background: rgba(255, 255, 255, 0.12);
-}
-
-.admin-hero h1 {
-  margin: 16px 0 10px;
-  font-size: 38px;
-  line-height: 1.15;
-}
-
-.admin-hero p {
-  max-width: 740px;
-  margin: 0;
-  line-height: 1.8;
-  color: rgba(255, 255, 255, 0.82);
-}
-
-.admin-hero__signal {
-  display: grid;
-  gap: 14px;
-}
-
-.signal-card {
-  display: grid;
-  gap: 8px;
-  padding: 20px;
-  border-radius: 22px;
-  background: rgba(255, 255, 255, 0.1);
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  backdrop-filter: blur(8px);
-  cursor: pointer;
-  transition: transform 0.26s ease, background-color 0.26s ease;
-}
-
-.signal-card:hover {
-  transform: translateY(-5px);
-  background: rgba(255, 255, 255, 0.16);
-}
-
-.signal-card span,
-.signal-card small {
-  color: rgba(255, 255, 255, 0.74);
-}
-
-.signal-card strong {
-  font-size: 40px;
-  line-height: 1;
-}
-
-.admin-metrics {
-  display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 16px;
-}
-
-.metric-panel {
-  position: relative;
-  display: grid;
-  gap: 10px;
-  padding: 22px;
-  border-radius: 22px;
-  border: 1px solid var(--border-soft);
-  background: rgba(255, 255, 255, 0.94);
-  box-shadow: var(--shadow-card);
-  overflow: hidden;
-  cursor: pointer;
-  transition: transform 0.26s ease, box-shadow 0.26s ease;
-}
-
-.metric-panel::after {
-  content: "";
-  position: absolute;
-  inset: auto -26px -26px auto;
-  width: 96px;
-  height: 96px;
-  border-radius: 50%;
-  background: radial-gradient(circle, rgba(20, 88, 212, 0.08), rgba(20, 88, 212, 0));
-}
-
-.metric-panel:hover {
-  transform: translateY(-6px);
-  box-shadow: var(--shadow-card-hover);
-}
-
-.metric-panel span,
-.metric-panel small {
-  color: var(--text-secondary);
-}
-
-.metric-panel strong {
-  font-size: 34px;
-  line-height: 1;
-}
-
-.admin-grid {
-  display: grid;
-  grid-template-columns: 1.25fr 0.75fr;
-  gap: 20px;
-}
-
-.admin-card {
-  border: 1px solid var(--border-soft);
-  border-radius: 24px;
-  box-shadow: var(--shadow-card);
-}
-
-.admin-card--wide {
-  grid-row: span 2;
-}
-
-.card-head h3,
-.card-head p {
-  margin: 0;
-}
-
-.card-head p {
-  margin-top: 4px;
-  color: var(--text-secondary);
-  font-size: 13px;
-}
-
-.focus-grid {
-  display: grid;
-  gap: 16px;
-}
-
-.focus-box {
-  padding: 18px;
-  border: 1px solid var(--border-soft);
-  border-radius: 20px;
-  background: linear-gradient(180deg, #fff, #f8fbff);
-  cursor: pointer;
-  transition: transform 0.26s ease, box-shadow 0.26s ease;
-}
-
-.focus-box:hover {
-  transform: translateY(-6px);
-  box-shadow: 0 20px 34px rgba(20, 33, 61, 0.12);
-}
-
-.focus-box__head {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-}
-
-.focus-box p {
-  margin: 10px 0 0;
-  color: var(--text-secondary);
-  line-height: 1.75;
-}
-
-.focus-box__badge {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  min-width: 52px;
-  padding: 6px 12px;
-  border-radius: 999px;
-  color: #fff;
-  font-size: 12px;
-}
-
-.tone-warning {
-  background: linear-gradient(135deg, #d97706, #f59e0b);
-}
-
-.tone-danger {
-  background: linear-gradient(135deg, #dc2626, #ef4444);
-}
-
-.tone-brand {
-  background: linear-gradient(135deg, #1458d4, #3b82f6);
-}
-
-.quick-grid {
-  display: grid;
-  gap: 12px;
-}
-
-.quick-box {
-  display: grid;
-  gap: 8px;
-  text-align: left;
-  padding: 16px 18px;
-  border: 1px solid var(--border-soft);
-  border-radius: 18px;
-  background: linear-gradient(180deg, #fff, #f8fbff);
-  cursor: pointer;
-  transition: transform 0.24s ease, box-shadow 0.24s ease, border-color 0.24s ease;
-}
-
-.quick-box:hover {
-  transform: translateX(6px);
-  border-color: rgba(20, 88, 212, 0.16);
-  box-shadow: 0 16px 28px rgba(20, 33, 61, 0.1);
-}
-
-.quick-box span {
-  color: var(--text-secondary);
-  font-size: 13px;
-}
-
-.risk-list {
-  display: grid;
-  gap: 14px;
-}
-
-.risk-item {
-  display: flex;
-  justify-content: space-between;
-  gap: 14px;
-  padding: 16px;
-  border: 1px solid var(--border-soft);
-  border-radius: 18px;
-  background: linear-gradient(180deg, #fff, #f8fbff);
-  cursor: pointer;
-  transition: transform 0.24s ease, box-shadow 0.24s ease;
-}
-
-.risk-item:hover {
-  transform: translateY(-4px);
-  box-shadow: 0 18px 28px rgba(20, 33, 61, 0.1);
-}
-
-.risk-item p {
-  margin: 6px 0 0;
-  color: var(--text-secondary);
-  font-size: 13px;
-  line-height: 1.7;
-}
-
-.dialog-list {
-  display: grid;
-  gap: 12px;
-}
-
-.dialog-card {
-  padding: 16px;
-  border-radius: 18px;
-  background: linear-gradient(180deg, #fff, #f8fbff);
-  border: 1px solid var(--border-soft);
-}
-
-@keyframes adminGlow {
-  0%,
-  100% {
-    transform: translate3d(0, 0, 0) scale(1);
-  }
-  50% {
-    transform: translate3d(-20px, 22px, 0) scale(1.12);
-  }
-}
-
-@media (max-width: 1200px) {
-  .admin-hero,
-  .admin-grid {
-    grid-template-columns: 1fr;
-  }
-
-  .admin-metrics {
-    grid-template-columns: repeat(2, 1fr);
-  }
-}
-
-@media (max-width: 760px) {
-  .admin-metrics {
-    grid-template-columns: 1fr;
-  }
 }
 </style>

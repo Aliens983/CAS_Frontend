@@ -85,27 +85,23 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref } from 'vue'
-import { currentUser } from '@/mock/campus-data'
-import type { UserRole } from '@/types'
+import { computed, ref, onMounted } from 'vue'
+import { ElMessage } from 'element-plus'
+import { fetchAdminUsers } from '@/services/campus'
+import type { UserInfo, UserRole } from '@/types'
 
 const keyword = ref('')
 const overviewVisible = ref(false)
 const overviewTitle = ref('')
 const overviewItems = ref<string[]>([])
-const selectedUser = ref<(typeof tableData)[number] | null>(null)
-
-const tableData = [
-  currentUser,
-  { ...currentUser, id: 2, username: '张敏', department: '教务处', email: 'zhangmin@campus.edu.cn', role: 'user' as const },
-  { ...currentUser, id: 3, username: '刘洋', department: '学生事务中心', email: 'liuyang@campus.edu.cn', role: 'user' as const },
-  { ...currentUser, id: 4, username: '王楠', department: '信息化办', email: 'wangnan@campus.edu.cn', role: 'admin' as const },
-]
+const selectedUser = ref<UserInfo | null>(null)
+const tableData = ref<UserInfo[]>([])
+const loading = ref(false)
 
 const filteredUsers = computed(() =>
-  tableData.filter((item) => [item.username, item.department, item.email].join('|').toLowerCase().includes(keyword.value.toLowerCase())),
+  tableData.value.filter((item) => [item.username, item.department, item.email].join('|').toLowerCase().includes(keyword.value.toLowerCase())),
 )
-const adminCount = computed(() => tableData.filter((item) => item.role === 'admin' || item.role === 'super_admin').length)
+const adminCount = computed(() => tableData.value.filter((item) => item.role === 'admin' || item.role === 'super_admin').length)
 const userDrawerVisible = computed({
   get: () => Boolean(selectedUser.value),
   set: (value: boolean) => {
@@ -113,25 +109,42 @@ const userDrawerVisible = computed({
   },
 })
 
+onMounted(async () => {
+  loading.value = true
+  try {
+    tableData.value = await fetchAdminUsers()
+  } catch (error: unknown) {
+    const err = error as { message?: string }
+    ElMessage.error(err.message || '获取用户列表失败')
+  } finally {
+    loading.value = false
+  }
+})
+
 function openOverview(mode: 'all' | 'admin' | 'active') {
   const mapping = {
-    all: { title: '全部用户', items: tableData.map((item) => `${item.username} / ${item.department}`) },
-    admin: { title: '管理员账号', items: tableData.filter((item) => item.role !== 'user').map((item) => `${item.username} / ${roleText(item.role)}`) },
-    active: { title: '活跃账号', items: tableData.map((item) => `${item.username} / 启用`) },
+    all: { title: '全部用户', items: tableData.value.map((item) => `${item.username} / ${item.department}`) },
+    admin: { title: '管理员账号', items: tableData.value.filter((item) => item.role !== 'user').map((item) => `${item.username} / ${roleText(item.role)}`) },
+    active: { title: '活跃账号', items: tableData.value.map((item) => `${item.username} / 启用`) },
   }
   overviewTitle.value = mapping[mode].title
   overviewItems.value = mapping[mode].items
   overviewVisible.value = true
 }
 
-function detailUser(item: (typeof tableData)[number]) {
+function detailUser(item: UserInfo) {
   overviewTitle.value = `${item.username} 账号详情`
   overviewItems.value = [`邮箱：${item.email}`, `电话：${item.phone}`, `角色：${roleText(item.role)}`]
   overviewVisible.value = true
 }
 
 function roleText(role: UserRole) {
-  return { user: '普通用户', admin: '管理员', super_admin: '超级管理员' }[role]
+  const map: Record<UserRole, string> = {
+    user: '普通用户',
+    admin: '管理员',
+    super_admin: '超级管理员',
+  }
+  return map[role] || '未知'
 }
 </script>
 

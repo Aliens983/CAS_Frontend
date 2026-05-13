@@ -37,7 +37,11 @@
         </div>
       </template>
 
-      <div class="booking-stack">
+      <div v-if="loading" class="loading-state">
+        <el-icon class="is-loading"><Loading /></el-icon>
+        <span>加载中...</span>
+      </div>
+      <div v-else class="booking-stack">
         <article v-for="item in filteredBookings" :key="item.id" class="booking-item" @click="router.push(`/bookings/${item.id}`)">
           <div class="booking-item__glow" />
           <div class="booking-item__main">
@@ -56,6 +60,9 @@
           </div>
           <div class="booking-item__arrow">查看详情</div>
         </article>
+        <div v-if="filteredBookings.length === 0" class="empty-state">
+          <span>暂无预约记录</span>
+        </div>
       </div>
     </el-card>
 
@@ -80,8 +87,8 @@
 import { computed, ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
-import { fetchBookingRecords } from '@/services/campus'
-import type { BookingRecord, BookingStatus } from '@/types'
+import { fetchBookingRecords } from '@/common/campus'
+import type { BookingRecord, BookingStatus } from '@/common/types'
 
 const router = useRouter()
 const filter = ref('all')
@@ -135,25 +142,24 @@ function statusText(status: BookingStatus) {
 </script>
 
 <style scoped lang="scss">
-.booking-overview { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
-.overview-card { position: relative; display: grid; gap: 8px; padding: 22px; border-radius: 22px; background: rgba(255,255,255,.92); border: 1px solid var(--border-soft); box-shadow: var(--shadow-card); overflow: hidden; cursor: pointer; transition: transform .26s ease, box-shadow .26s ease; }
-.overview-card::after { content: ''; position: absolute; inset: auto -24px -24px auto; width: 92px; height: 92px; border-radius: 50%; background: radial-gradient(circle, rgba(20,88,212,.08), rgba(20,88,212,0)); }
-.overview-card:hover { transform: translateY(-6px); box-shadow: var(--shadow-card-hover); }
-.overview-card span, .overview-card small { color: var(--text-secondary); }
-.overview-card strong { font-size: 34px; }
-.header-actions { display: flex; gap: 12px; align-items: center; }
-.booking-stack { display: grid; gap: 14px; }
-.booking-item { position: relative; display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 18px 20px; border-radius: 20px; border: 1px solid var(--border-soft); background: linear-gradient(180deg, #fff, #f8fbff); cursor: pointer; overflow: hidden; transition: transform .24s ease, box-shadow .24s ease, border-color .24s ease; }
-.booking-item:hover { transform: translateY(-4px); box-shadow: 0 18px 28px rgba(20,33,61,.1); border-color: rgba(20,88,212,.14); }
-.booking-item__glow { position: absolute; top: -28px; right: -28px; width: 96px; height: 96px; border-radius: 50%; background: radial-gradient(circle, rgba(20,88,212,.1), rgba(20,88,212,0)); transition: transform .28s ease; }
-.booking-item:hover .booking-item__glow { transform: scale(1.2); }
-.booking-item__main, .booking-item__arrow { position: relative; z-index: 1; }
-.booking-item__main { flex: 1; }
-.booking-item__head { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 8px; }
-.booking-item__head p { margin: 4px 0 0; color: var(--text-tertiary); font-size: 12px; }
-.booking-item__meta { display: flex; flex-wrap: wrap; gap: 12px; color: var(--text-secondary); font-size: 13px; }
-.booking-item__arrow { color: var(--brand-500); font-size: 13px; font-weight: 600; }
-.dialog-list, .drawer-stack { display: grid; gap: 12px; }
-.dialog-card { padding: 16px; border-radius: 18px; background: linear-gradient(180deg, #fff, #f8fbff); border: 1px solid var(--border-soft); }
-@media (max-width: 900px) { .booking-overview { grid-template-columns: 1fr; } .booking-item, .booking-item__head, .header-actions { flex-direction: column; align-items: flex-start; } }
+.loading-state {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 40px;
+  color: var(--text-secondary);
+}
+
+.empty-state {
+  text-align: center;
+  padding: 40px;
+  color: var(--text-secondary);
+}
+
+.header-actions {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+}
 </style>

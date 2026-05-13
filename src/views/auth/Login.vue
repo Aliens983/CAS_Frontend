@@ -24,8 +24,8 @@
         </div>
 
         <el-form ref="formRef" :model="form" :rules="rules" size="large">
-          <el-form-item prop="username">
-            <el-input v-model="form.username" placeholder="用户名 / 工号" />
+          <el-form-item prop="email">
+            <el-input v-model="form.email" placeholder="邮箱" />
           </el-form-item>
           <el-form-item prop="password">
             <el-input v-model="form.password" type="password" show-password placeholder="密码" />
@@ -69,7 +69,6 @@ import { ElMessage, type FormInstance, type FormRules } from 'element-plus'
 import { useUserStore } from '@/stores/user'
 import { userService } from '@/services'
 import { userAPI } from '@/services/api'
-import { currentUser } from '@/mock/campus-data'
 import { extractToken, normalizeUserInfo, resolveHomeByRole } from '@/utils/auth'
 
 const router = useRouter()
@@ -79,14 +78,14 @@ const loading = ref(false)
 const captchaImage = ref<string>('')
 
 const form = reactive({
-  username: '',
+  email: '',
   password: '',
   captcha: '',
   remember: true,
 })
 
 const rules: FormRules = {
-  username: [{ required: true, message: '请输入用户名', trigger: 'blur' }],
+  email: [{ required: true, message: '请输入邮箱', trigger: 'blur' }],
   password: [{ required: true, message: '请输入密码', trigger: 'blur' }],
   captcha: [{ required: true, message: '请输入验证码', trigger: 'blur' }],
 }
@@ -94,10 +93,8 @@ const rules: FormRules = {
 // 刷新验证码
 async function refreshCaptcha() {
   try {
-    const response = (await userAPI.getGraphicCaptcha()) as unknown as Blob
-    // 创建 Blob URL
-    const blob = new Blob([response], { type: 'image/jpeg' })
-    captchaImage.value = URL.createObjectURL(blob)
+    const response = await userAPI.getGraphicCaptcha() as unknown as { uuid: string; image: string }
+    captchaImage.value = response.image
   } catch (error) {
     console.error('获取验证码失败:', error)
     ElMessage.error('获取验证码失败，请重试')
@@ -110,37 +107,18 @@ async function submit() {
   loading.value = true
 
   try {
-    const loginResult = await userService.login(form.username, form.password, form.captcha)
+    const loginResult = await userService.login(form.email, form.password, form.captcha)
     const token = extractToken(loginResult)
     if (token) userStore.setToken(token)
 
-    let infoPayload: unknown = null
-    try {
-      infoPayload = await userService.getInfo()
-    } catch {
-      const fallbackPayload = loginResult as unknown as Record<string, unknown>
-      infoPayload = fallbackPayload?.user || loginResult
-    }
-
-    const normalized = normalizeUserInfo(infoPayload || currentUser)
+    const infoPayload = await userService.getInfo()
+    const normalized = normalizeUserInfo(infoPayload)
     userStore.setUserInfo(normalized)
     ElMessage.success(`登录成功，已进入${userStore.isAdmin ? '管理端' : '用户端'}`)
     router.push(resolveHomeByRole(normalized.role))
-  } catch {
-    if (import.meta.env.DEV) {
-      const lowerName = form.username.toLowerCase()
-      const mockRole = lowerName.includes('super') ? 'super_admin' : lowerName.includes('admin') ? 'admin' : 'user'
-      userStore.setToken('dev-mock-token')
-      userStore.setUserInfo({
-        ...currentUser,
-        username: form.username || currentUser.username,
-        role: mockRole,
-      })
-      ElMessage.warning('后端登录接口未连通，已切换到开发演示身份')
-      router.push(resolveHomeByRole(mockRole))
-    } else {
-      ElMessage.error('登录失败，请检查账号、密码或身份接口')
-    }
+  } catch (error: unknown) {
+    const err = error as { message?: string }
+    ElMessage.error(err.message || '登录失败，请检查账号、密码或身份接口')
   } finally {
     loading.value = false
   }

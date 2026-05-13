@@ -30,54 +30,47 @@
       <el-card class="panel-card span-4">
         <div class="profile-summary">
           <div class="profile-summary__halo" />
-          <el-avatar :size="92">{{ user.username.slice(0, 1) }}</el-avatar>
-          <h3>{{ user.username }}</h3>
-          <p>{{ user.department }}</p>
-          <el-tag :type="user.role === 'admin' || user.role === 'super_admin' ? 'danger' : 'success'">{{ roleLabel }}</el-tag>
+          <el-avatar :size="92">{{ user?.username?.slice(0, 1) || 'U' }}</el-avatar>
+          <h3>{{ user?.username || '未登录' }}</h3>
+          <p>{{ user?.department || '未分配部门' }}</p>
+          <el-tag :type="user?.role === 'admin' || user?.role === 'super_admin' ? 'danger' : 'success'">{{ roleLabel }}</el-tag>
         </div>
       </el-card>
 
       <el-card class="panel-card span-8">
         <template #header><div class="section-head"><h3 class="section-head__title">账户信息</h3></div></template>
         <div class="info-list">
-          <div class="info-row"><span>邮箱</span><strong>{{ user.email }}</strong></div>
-          <div class="info-row"><span>手机号</span><strong>{{ user.phone }}</strong></div>
+          <div class="info-row"><span>邮箱</span><strong>{{ user?.email || '-' }}</strong></div>
+          <div class="info-row"><span>手机号</span><strong>{{ user?.phone || '-' }}</strong></div>
           <div class="info-row"><span>角色</span><strong>{{ roleLabel }}</strong></div>
-          <div class="info-row"><span>创建时间</span><strong>{{ user.createdAt }}</strong></div>
+          <div class="info-row"><span>创建时间</span><strong>{{ user?.createdAt || '-' }}</strong></div>
         </div>
         <el-divider />
         <div class="preference-grid">
           <div class="preference-card" @click="preferenceVisible = true">
             <div>
-              <strong>消息通知</strong>
-              <p>站内信、系统公告和预约提醒</p>
+              <strong>通知偏好</strong>
+              <p>管理邮件和系统通知的接收方式</p>
             </div>
-            <el-switch model-value />
+            <el-icon><ArrowRight /></el-icon>
           </div>
-          <div class="preference-card" @click="preferenceVisible = true">
+          <div class="preference-card" @click="handleLogout">
             <div>
-              <strong>审批结果提醒</strong>
-              <p>审核通过、驳回和变更通知</p>
+              <strong>退出登录</strong>
+              <p>清除登录状态并返回登录页</p>
             </div>
-            <el-switch model-value />
+            <el-icon><ArrowRight /></el-icon>
           </div>
         </div>
       </el-card>
     </section>
 
-    <el-dialog v-model="preferenceVisible" title="通知偏好说明" width="560px">
-      <div class="dialog-list">
-        <div class="dialog-card">站内消息默认开启，用于承接审批结果、系统公告和预约提醒。</div>
-        <div class="dialog-card">后续你可以把这里直接接到用户偏好配置接口。</div>
-      </div>
-    </el-dialog>
-
-    <el-drawer v-model="quickVisible" title="个人中心快捷操作" size="420px">
+    <el-drawer v-model="quickVisible" title="快捷操作" size="420px">
       <div class="drawer-stack">
-        <el-button type="primary" @click="router.push('/bookings')">查看我的预约</el-button>
-        <el-button plain @click="router.push('/messages')">查看消息中心</el-button>
-        <el-button plain @click="router.push('/services')">进入服务中心</el-button>
-        <el-button plain @click="router.push('/dashboard')">返回工作台</el-button>
+        <el-button type="primary" @click="router.push('/dashboard')">返回工作台</el-button>
+        <el-button plain @click="router.push('/bookings')">我的预约</el-button>
+        <el-button plain @click="router.push('/services')">服务中心</el-button>
+        <el-button plain @click="router.push('/messages')">消息中心</el-button>
       </div>
     </el-drawer>
   </div>
@@ -86,22 +79,15 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
 import { useRouter } from 'vue-router'
-import { useUserStore } from '@/stores/user'
+import { ElMessage } from 'element-plus'
+import { useUserStore } from '@/common/stores/user'
 
 const router = useRouter()
 const userStore = useUserStore()
 const preferenceVisible = ref(false)
 const quickVisible = ref(false)
 
-const user = computed(() => userStore.userInfo ?? {
-  id: 0,
-  username: '未登录',
-  email: '-',
-  phone: '-',
-  role: 'user',
-  department: '-',
-  createdAt: '-',
-})
+const user = computed(() => userStore.userInfo)
 
 const roleLabel = computed(() => {
   const role = user.value?.role
@@ -109,6 +95,12 @@ const roleLabel = computed(() => {
   if (role === 'admin') return '管理员'
   return '普通用户'
 })
+
+function handleLogout() {
+  userStore.logout()
+  ElMessage.success('已退出登录')
+  router.push('/login')
+}
 </script>
 
 <style scoped lang="scss">

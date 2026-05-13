@@ -86,9 +86,9 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref } from 'vue'
+import { computed, ref, onMounted } from 'vue'
 import { ElMessage } from 'element-plus'
-import { bookings } from '@/mock/campus-data'
+import { fetchBookingRecords } from '@/services/campus'
 import type { BookingRecord, BookingStatus } from '@/types'
 
 const filter = ref('all')
@@ -96,6 +96,8 @@ const overviewVisible = ref(false)
 const overviewTitle = ref('')
 const overviewItems = ref<string[]>([])
 const selectedBooking = ref<BookingRecord | null>(null)
+const bookings = ref<BookingRecord[]>([])
+const loading = ref(false)
 const filters = [
   { label: '全部', value: 'all' },
   { label: '待审核', value: 'pending' },
@@ -103,9 +105,9 @@ const filters = [
   { label: '已完成', value: 'completed' },
 ]
 
-const filteredBookings = computed(() => (filter.value === 'all' ? bookings : bookings.filter((item) => item.status === filter.value)))
-const pendingCount = computed(() => bookings.filter((item) => item.status === 'pending').length)
-const approvedCount = computed(() => bookings.filter((item) => item.status === 'approved').length)
+const filteredBookings = computed(() => (filter.value === 'all' ? bookings.value : bookings.value.filter((item) => item.status === filter.value)))
+const pendingCount = computed(() => bookings.value.filter((item) => item.status === 'pending').length)
+const approvedCount = computed(() => bookings.value.filter((item) => item.status === 'approved').length)
 const bookingDrawerVisible = computed({
   get: () => Boolean(selectedBooking.value),
   set: (value: boolean) => {
@@ -113,11 +115,23 @@ const bookingDrawerVisible = computed({
   },
 })
 
+onMounted(async () => {
+  loading.value = true
+  try {
+    bookings.value = await fetchBookingRecords()
+  } catch (error: unknown) {
+    const err = error as { message?: string }
+    ElMessage.error(err.message || '获取预约记录失败')
+  } finally {
+    loading.value = false
+  }
+})
+
 function openOverview(mode: 'all' | 'pending' | 'approved') {
   const mapping = {
-    all: { title: '全部申请', items: bookings.map((item) => `${item.bookingNo} / ${item.serviceName}`) },
-    pending: { title: '待审核申请', items: bookings.filter((item) => item.status === 'pending').map((item) => `${item.bookingNo} / ${item.applicant}`) },
-    approved: { title: '已通过申请', items: bookings.filter((item) => item.status === 'approved').map((item) => `${item.bookingNo} / ${item.serviceName}`) },
+    all: { title: '全部申请', items: bookings.value.map((item) => `${item.bookingNo} / ${item.serviceName}`) },
+    pending: { title: '待审核申请', items: bookings.value.filter((item) => item.status === 'pending').map((item) => `${item.bookingNo} / ${item.applicant}`) },
+    approved: { title: '已通过申请', items: bookings.value.filter((item) => item.status === 'approved').map((item) => `${item.bookingNo} / ${item.serviceName}`) },
   }
   overviewTitle.value = mapping[mode].title
   overviewItems.value = mapping[mode].items

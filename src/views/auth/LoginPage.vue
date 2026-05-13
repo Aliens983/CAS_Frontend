@@ -71,8 +71,8 @@ const rules: FormRules = {
 
 async function refreshCaptcha() {
   try {
-    const blob = (await request.get('/graphic/get', { responseType: 'blob' })) as Blob
-    captchaImage.value = URL.createObjectURL(blob)
+    const response = await request.get('/graphic/get') as unknown as { uuid: string; image: string }
+    captchaImage.value = response.image
   } catch {
     captchaImage.value = ''
   }
@@ -93,12 +93,9 @@ async function submit() {
     userStore.setUserInfo(await loadUserProfile())
     ElMessage.success('登录成功')
     router.push(resolveHomeByRole(userStore.userInfo?.role))
-  } catch {
-    if (import.meta.env.DEV) {
-      userStore.bootstrapDevUser()
-      ElMessage.warning('后端登录失败，已切换到开发演示身份')
-      router.push(resolveHomeByRole(userStore.userInfo?.role))
-    }
+  } catch (error: unknown) {
+    const err = error as { message?: string }
+    ElMessage.error(err.message || '登录失败，请检查账号、密码或身份接口')
   } finally {
     loading.value = false
   }

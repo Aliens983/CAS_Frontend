@@ -31,12 +31,16 @@
       </article>
       <article class="overview-card">
         <span>能力整合</span>
-        <strong>4</strong>
+        <strong>{{ categoryCount }}</strong>
         <small>会议室、设备、咨询、打印</small>
       </article>
     </section>
 
-    <section class="resource-grid">
+    <section v-if="loading" class="loading-state">
+      <el-icon class="is-loading"><Loading /></el-icon>
+      <span>加载中...</span>
+    </section>
+    <section v-else class="resource-grid">
       <article v-for="item in filteredServices" :key="item.id" class="resource-card">
         <div class="resource-card__pulse" />
         <div class="cover-badge" :class="item.image">{{ item.code }}</div>
@@ -68,8 +72,8 @@
 import { computed, ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
-import { fetchServiceCards } from '@/services/campus'
-import type { ServiceCard } from '@/types'
+import { fetchServiceCards } from '@/common/campus'
+import type { ServiceCard } from '@/common/types'
 
 const router = useRouter()
 const keyword = ref('')
@@ -87,6 +91,7 @@ const filteredServices = computed(() =>
 )
 
 const availableCount = computed(() => services.value.filter((item) => item.status === 'available').length)
+const categoryCount = computed(() => new Set(services.value.map(item => item.type)).size)
 
 onMounted(async () => {
   loading.value = true
@@ -112,10 +117,19 @@ function goService(id: number, type: string) {
 </script>
 
 <style scoped lang="scss">
+.loading-state {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 40px;
+  color: var(--text-secondary);
+}
+
 .hero-actions {
   display: grid;
+  grid-template-columns: 1fr 180px;
   gap: 12px;
-  width: min(320px, 100%);
 }
 
 .service-overview {
@@ -124,80 +138,28 @@ function goService(id: number, type: string) {
   gap: 16px;
 }
 
-.overview-card {
-  position: relative;
+.resource-grid {
   display: grid;
-  gap: 8px;
+  grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+  gap: 20px;
+}
+
+.resource-card {
+  position: relative;
   padding: 22px;
   border-radius: 22px;
-  background: rgba(255, 255, 255, 0.92);
+  background: rgba(255,255,255,.92);
   border: 1px solid var(--border-soft);
   box-shadow: var(--shadow-card);
-  overflow: hidden;
-  transition: transform 0.26s ease, box-shadow 0.26s ease;
-}
-
-.overview-card::after {
-  content: '';
-  position: absolute;
-  inset: auto -22px -22px auto;
-  width: 88px;
-  height: 88px;
-  border-radius: 50%;
-  background: radial-gradient(circle, rgba(20, 88, 212, 0.08), rgba(20, 88, 212, 0));
-}
-
-.overview-card:hover {
-  transform: translateY(-6px);
-  box-shadow: var(--shadow-card-hover);
-}
-
-.overview-card span,
-.overview-card small {
-  color: var(--text-secondary);
-}
-
-.overview-card strong {
-  font-size: 34px;
 }
 
 .resource-card__pulse {
   position: absolute;
-  top: -24px;
-  right: -24px;
-  width: 88px;
-  height: 88px;
-  border-radius: 50%;
-  background: radial-gradient(circle, rgba(20, 88, 212, 0.12), rgba(20, 88, 212, 0));
-  animation: servicePulse 5.8s ease-in-out infinite;
-}
-
-.tag-wrap {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-}
-
-.button-row {
-  display: flex;
-  gap: 10px;
-}
-
-@keyframes servicePulse {
-  0%,
-  100% {
-    transform: scale(1);
-    opacity: 0.7;
-  }
-  50% {
-    transform: scale(1.16);
-    opacity: 1;
-  }
-}
-
-@media (max-width: 900px) {
-  .service-overview {
-    grid-template-columns: 1fr;
-  }
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  border-radius: 22px 22px 0 0;
+  background: linear-gradient(90deg, #667eea, #764ba2);
 }
 </style>

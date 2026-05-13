@@ -6,15 +6,15 @@ export const userService = {
   /**
    * 登录
    */
-  async login(username: string, password: string, captcha?: string) {
-    return await userAPI.login({ username, password, captcha })
+  async login(email: string, password: string, captcha?: string) {
+    return await userAPI.login({ email, password, captcha })
   },
   
   /**
    * 注册
    */
-  async register(username: string, email: string, password: string, captcha?: string) {
-    return await userAPI.register({ username, email, password, captcha })
+  async register(name: string, email: string, password: string, code: string) {
+    return await userAPI.register({ name, email, password, code })
   },
   
   /**
@@ -228,13 +228,6 @@ export const consultationService = {
 // 管理员服务
 export const adminService = {
   /**
-   * 获取系统统计
-   */
-  async getStatistics() {
-    return await adminAPI.getStatistics()
-  },
-  
-  /**
    * 获取用户列表
    */
   async getUsers(params: {
@@ -246,7 +239,7 @@ export const adminService = {
   }) {
     return await adminAPI.getUsers(params)
   },
-  
+
   /**
    * 获取预约管理列表
    */
@@ -258,18 +251,5 @@ export const adminService = {
     date?: string
   }) {
     return await adminAPI.getBookingManagement(params)
-  },
-  
-  /**
-   * 获取日志列表
-   */
-  async getLogs(params: {
-    page?: number
-    pageSize?: number
-    type?: string
-    startDate?: string
-    endDate?: string
-  }) {
-    return await adminAPI.getLogs(params)
   }
 }

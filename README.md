@@ -57,7 +57,7 @@ enterprise-frontend/
 ├── tsconfig.json           # TypeScript配置
 ├── vite.config.ts          # Vite配置
 ├── postcss.config.js       # PostCSS配置
-└── .eslintrc.cjs           # ESLint配置
+└── .eslintrc.config.cjs           # ESLint配置
 ```
 
 ## 快速开始
