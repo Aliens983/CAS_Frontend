@@ -25,7 +25,9 @@
       </div>
     </section>
 
-    <section class="resource-grid">
+    <section v-if="loading" style="text-align:center;padding:80px 0;color:var(--text-secondary)">加载设备数据中...</section>
+    <section v-else-if="!equipments.length" style="text-align:center;padding:80px 0;color:var(--text-secondary)">暂无可用设备</section>
+    <section v-else class="resource-grid">
       <article v-for="item in equipments" :key="item.id" class="resource-card equipment-card">
         <div class="cover-badge" :class="item.image">{{ item.category }}</div>
         <div class="section-head" style="margin-bottom: 8px;">
@@ -74,11 +76,13 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref } from 'vue'
+import { computed, ref, onMounted } from 'vue'
 import { ElMessage } from 'element-plus'
-import { equipments } from '@/mock/campus-data'
+import { equipmentAPI } from '@/services/api'
 import type { EquipmentResource } from '@/types'
 
+const equipments = ref<EquipmentResource[]>([])
+const loading = ref(true)
 const borrowableVisible = ref(false)
 const selectedEquipment = ref<EquipmentResource | null>(null)
 const equipmentDrawerVisible = computed({
@@ -88,8 +92,23 @@ const equipmentDrawerVisible = computed({
   },
 })
 
-const borrowableCount = computed(() => equipments.filter((item) => item.availableStock > 0).length)
-const borrowableResources = computed(() => equipments.filter((item) => item.availableStock > 0))
+onMounted(async () => {
+  try {
+    const data = await equipmentAPI.getEquipment({}) as any
+    if (Array.isArray(data)) {
+      equipments.value = data
+    } else if (data?.data && Array.isArray(data.data)) {
+      equipments.value = data.data
+    }
+  } catch {
+    ElMessage.warning('获取设备列表失败，使用本地数据')
+  } finally {
+    loading.value = false
+  }
+})
+
+const borrowableCount = computed(() => equipments.value.filter((item) => item.availableStock > 0).length)
+const borrowableResources = computed(() => equipments.value.filter((item) => item.availableStock > 0))
 
 function showBorrowable() {
   borrowableVisible.value = true

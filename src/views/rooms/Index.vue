@@ -34,7 +34,9 @@
       </div>
     </section>
 
-    <section class="resource-grid">
+    <section v-if="loading" style="text-align:center;padding:80px 0;color:var(--text-secondary)">加载会议室数据中...</section>
+    <section v-else-if="!filteredRooms.length" style="text-align:center;padding:80px 0;color:var(--text-secondary)">暂无匹配的会议室</section>
+    <section v-else class="resource-grid">
       <article v-for="room in filteredRooms" :key="room.id" class="resource-card room-card">
         <div class="cover-badge" :class="room.image">{{ room.name.slice(-3) }}</div>
         <div class="section-head" style="margin-bottom: 8px;">
@@ -107,11 +109,13 @@
 </template>
 
 <script setup lang="ts">
-import { computed, reactive, ref } from 'vue'
+import { computed, onMounted, reactive, ref } from 'vue'
 import { ElMessage } from 'element-plus'
-import { rooms } from '@/mock/campus-data'
+import { roomAPI } from '@/services/api'
 import type { BookingDraft, RoomResource } from '@/types'
 
+const rooms = ref<RoomResource[]>([])
+const loading = ref(true)
 const keyword = ref('')
 const status = ref('')
 const visible = ref(false)
@@ -137,19 +141,34 @@ const draft = reactive<BookingDraft>({
   notes: '',
 })
 
+onMounted(async () => {
+  try {
+    const data = await roomAPI.getRooms({}) as any
+    if (Array.isArray(data)) {
+      rooms.value = data
+    } else if (data?.data && Array.isArray(data.data)) {
+      rooms.value = data.data
+    }
+  } catch {
+    ElMessage.warning('获取会议室列表失败')
+  } finally {
+    loading.value = false
+  }
+})
+
 const filteredRooms = computed(() =>
-  rooms.filter((room) => {
+  rooms.value.filter((room) => {
     const searchTarget = `${room.name}|${room.building}|${room.facilities.join('|')}`
     const matchKeyword = !keyword.value || searchTarget.toLowerCase().includes(keyword.value.toLowerCase())
     const matchStatus = !status.value || room.status === status.value
     return matchKeyword && matchStatus
   }),
 )
-const availableRooms = computed(() => rooms.filter((room) => room.status === 'available').length)
+const availableRooms = computed(() => rooms.value.filter((room) => room.status === 'available').length)
 
 function showAvailableRooms() {
   resourceDialogTitle.value = '当前可预约会议室'
-  resourceDialogItems.value = rooms
+  resourceDialogItems.value = rooms.value
     .filter((room) => room.status === 'available')
     .map((room) => ({ title: room.name, desc: `${room.building} ${room.floor} / ${room.capacity} 人 / ${room.openTime}` }))
   resourceVisible.value = true

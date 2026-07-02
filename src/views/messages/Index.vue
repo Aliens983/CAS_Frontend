@@ -86,7 +86,6 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
 import { useRouter } from 'vue-router'
-import { messages } from '@/mock/campus-data'
 import type { MessageItem } from '@/types'
 
 const router = useRouter()
@@ -95,6 +94,7 @@ const overviewVisible = ref(false)
 const overviewTitle = ref('')
 const overviewItems = ref<string[]>([])
 const selectedMessage = ref<MessageItem | null>(null)
+const messages = ref<MessageItem[]>([])
 const filters = [
   { label: '全部', value: 'all' },
   { label: '审核', value: 'approval' },
@@ -102,9 +102,9 @@ const filters = [
   { label: '公告', value: 'notice' },
 ]
 
-const unreadCount = computed(() => messages.filter((item) => item.unread).length)
-const messageTypes = computed(() => new Set(messages.map((item) => item.type)).size)
-const filteredMessages = computed(() => (filter.value === 'all' ? messages : messages.filter((item) => item.type === filter.value)))
+const unreadCount = computed(() => messages.value.filter((item) => item.unread).length)
+const messageTypes = computed(() => new Set(messages.value.map((item) => item.type)).size)
+const filteredMessages = computed(() => (filter.value === 'all' ? messages.value : messages.value.filter((item) => item.type === filter.value)))
 const messageDrawerVisible = computed({
   get: () => Boolean(selectedMessage.value),
   set: (value: boolean) => {

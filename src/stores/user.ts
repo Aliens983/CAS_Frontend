@@ -1,6 +1,5 @@
 import { computed, ref } from 'vue'
 import { defineStore } from 'pinia'
-import { currentUser } from '@/mock/campus-data'
 import type { UserInfo } from '@/types'
 import { isAdminRole } from '@/utils/auth'
 
@@ -12,11 +11,6 @@ export const useUserStore = defineStore(
 
     const isLogin = computed(() => Boolean(token.value))
     const isAdmin = computed(() => isAdminRole(userInfo.value?.role))
-
-    function bootstrapDevUser() {
-      token.value = 'dev-mock-token'
-      userInfo.value = currentUser
-    }
 
     function setToken(value: string) {
       token.value = value
@@ -36,7 +30,6 @@ export const useUserStore = defineStore(
       userInfo,
       isLogin,
       isAdmin,
-      bootstrapDevUser,
       setToken,
       setUserInfo,
       logout,

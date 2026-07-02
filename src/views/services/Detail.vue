@@ -55,14 +55,55 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref } from 'vue'
+import { computed, onMounted, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import { consultants, equipments, rooms, services } from '@/mock/campus-data'
+import { roomAPI, equipmentAPI, consultationAPI } from '@/services/api'
+import type { Consultant, EquipmentResource, RoomResource, ServiceCard } from '@/types'
 
 const route = useRoute()
 const router = useRouter()
 const relatedVisible = ref(false)
-const service = computed(() => services.find((item) => item.id === Number(route.params.id)))
+const loading = ref(true)
+const service = ref<ServiceCard | null>(null)
+const rooms = ref<RoomResource[]>([])
+const equipments = ref<EquipmentResource[]>([])
+const consultants = ref<Consultant[]>([])
+
+onMounted(async () => {
+  try {
+    const id = Number(route.params.id)
+    // 并行获取所有数据
+    const [serviceData, roomsData, equipmentData, consultationData] = await Promise.allSettled([
+      roomAPI.getRoom(String(id)) as Promise<any>,
+      roomAPI.getRooms({}) as Promise<any>,
+      equipmentAPI.getEquipment({}) as Promise<any>,
+      consultationAPI.getConsultants({}) as Promise<any>,
+    ])
+
+    if (serviceData.status === 'fulfilled' && serviceData.value) {
+      service.value = serviceData.value?.data || serviceData.value
+    }
+
+    if (roomsData.status === 'fulfilled' && roomsData.value) {
+      const list = Array.isArray(roomsData.value) ? roomsData.value : (roomsData.value?.data || [])
+      rooms.value = Array.isArray(list) ? list : []
+    }
+
+    if (equipmentData.status === 'fulfilled' && equipmentData.value) {
+      const list = Array.isArray(equipmentData.value) ? equipmentData.value : (equipmentData.value?.data || [])
+      equipments.value = Array.isArray(list) ? list : []
+    }
+
+    if (consultationData.status === 'fulfilled' && consultationData.value) {
+      const list = Array.isArray(consultationData.value) ? consultationData.value : (consultationData.value?.data || [])
+      consultants.value = Array.isArray(list) ? list : []
+    }
+  } catch {
+    // fallback
+  } finally {
+    loading.value = false
+  }
+})
 
 const moduleSteps = [
   { phase: '01', title: '服务展示', desc: '面向用户展示资源、能力、状态和规则。' },
@@ -74,13 +115,13 @@ const moduleSteps = [
 const relatedItems = computed(() => {
   if (!service.value) return []
   if (service.value.type === 'room') {
-    return rooms.map((item) => ({ title: item.name, desc: `${item.building} ${item.floor} / ${item.capacity} 人` }))
+    return rooms.value.map((item) => ({ title: item.name, desc: `${item.building} ${item.floor} / ${item.capacity} 人` }))
   }
   if (service.value.type === 'equipment') {
-    return equipments.map((item) => ({ title: item.name, desc: `${item.location} / 可借 ${item.availableStock} ${item.unit}` }))
+    return equipments.value.map((item) => ({ title: item.name, desc: `${item.location} / 可借 ${item.availableStock} ${item.unit}` }))
   }
   if (service.value.type === 'consultation') {
-    return consultants.map((item) => ({ title: item.name, desc: `${item.title} / ${item.nextSlot}` }))
+    return consultants.value.map((item) => ({ title: item.name, desc: `${item.title} / ${item.nextSlot}` }))
   }
   return []
 })

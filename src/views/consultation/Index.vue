@@ -19,7 +19,9 @@
       </div>
     </section>
 
-    <section class="resource-grid">
+    <section v-if="loading" style="text-align:center;padding:80px 0;color:var(--text-secondary)">加载咨询师数据中...</section>
+    <section v-else-if="!consultants.length" style="text-align:center;padding:80px 0;color:var(--text-secondary)">暂无可用咨询师</section>
+    <section v-else class="resource-grid">
       <article v-for="consultant in consultants" :key="consultant.id" class="resource-card consultant-card">
         <div class="cover-badge gradient-amber">{{ consultant.name }}</div>
         <div class="section-head" style="margin-bottom: 8px;">
@@ -77,11 +79,13 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref } from 'vue'
+import { computed, onMounted, ref } from 'vue'
 import { ElMessage } from 'element-plus'
-import { consultants } from '@/mock/campus-data'
+import { consultationAPI } from '@/services/api'
 import type { Consultant } from '@/types'
 
+const consultants = ref<Consultant[]>([])
+const loading = ref(true)
 const availableVisible = ref(false)
 const selectedConsultant = ref<Consultant | null>(null)
 const consultantDrawerVisible = computed({
@@ -91,7 +95,22 @@ const consultantDrawerVisible = computed({
   },
 })
 
-const availableConsultants = computed(() => consultants.filter((item) => item.available).length)
+onMounted(async () => {
+  try {
+    const data = await consultationAPI.getConsultants({}) as any
+    if (Array.isArray(data)) {
+      consultants.value = data
+    } else if (data?.data && Array.isArray(data.data)) {
+      consultants.value = data.data
+    }
+  } catch {
+    ElMessage.warning('获取咨询师列表失败')
+  } finally {
+    loading.value = false
+  }
+})
+
+const availableConsultants = computed(() => consultants.value.filter((item) => item.available).length)
 
 function showAvailableConsultants() {
   availableVisible.value = true

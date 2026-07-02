@@ -58,12 +58,29 @@
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue'
+import { computed, onMounted, ref } from 'vue'
 import { useRoute } from 'vue-router'
-import { bookings } from '@/mock/campus-data'
+import { bookingAPI } from '@/services/api'
+import type { BookingRecord } from '@/types'
 
 const route = useRoute()
-const detail = computed(() => bookings.find((item) => item.id === Number(route.params.id)))
+const detail = ref<BookingRecord | null>(null)
+const loading = ref(true)
+
+onMounted(async () => {
+  try {
+    const id = String(route.params.id)
+    const data = await bookingAPI.getBooking(id) as any
+    if (data) {
+      detail.value = data?.data || data
+    }
+  } catch {
+    // 如果API调用失败，detail 保持 null
+  } finally {
+    loading.value = false
+  }
+})
+
 const tagType = computed(() => ({ pending: 'warning', approved: 'success', rejected: 'danger', completed: 'info', cancelled: 'info' }[detail.value?.status || 'pending']))
 const statusLabel = computed(() => ({ pending: '待审核', approved: '已通过', rejected: '已驳回', completed: '已完成', cancelled: '已取消' }[detail.value?.status || 'pending']))
 </script>

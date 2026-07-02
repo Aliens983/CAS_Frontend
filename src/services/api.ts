@@ -110,7 +110,11 @@ export const bookingAPI = {
 
   // 管理员审批预约
   approveBooking: (bookingId: string, status: 'approved' | 'rejected', remark?: string) => {
-    return request.post(`/book/${bookingId}/status`, { status, remark })
+    const auditStatus = status === 'approved' ? 1 : 2
+    const path = status === 'approved'
+      ? '/admin/service-status/audit/pass'
+      : '/admin/service-status/audit/reject'
+    return request.post(path, { orderId: Number(bookingId), status: auditStatus, reason: remark || '' })
   }
 }
 
@@ -129,7 +133,7 @@ export const roomAPI = {
 
   // 获取会议室详情
   getRoom: (id: string) => {
-    return request.get(`/service/id`, { params: { userId: id } })
+    return request.get(`/service/${id}`)
   },
 
   // 获取可用会议室
@@ -203,7 +207,7 @@ export const adminAPI = {
     status?: string
     date?: string
   }) => {
-    return request.get('/service-status', { params })
+    return request.get('/admin/service-status', { params })
   },
 
   // 获取日志列表 (后端暂无此接口)
