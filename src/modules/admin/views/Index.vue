@@ -187,7 +187,7 @@ function openSignal(type: 'pending' | 'risk') {
 
 function openFocus(item: { title: string; desc: string; value: string }) {
   detailTitle.value = item.title
-  detailItems.value = [item.desc, `当前判断：${item.value}`, '后续可在这里继续接入治理动作和处理记录。']
+  detailItems.value = [item.desc, `当前判断：${item.value}`]
   detailVisible.value = true
 }
 

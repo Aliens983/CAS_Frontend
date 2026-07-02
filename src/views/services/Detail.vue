@@ -82,7 +82,7 @@ const relatedItems = computed(() => {
   if (service.value.type === 'consultation') {
     return consultants.map((item) => ({ title: item.name, desc: `${item.title} / ${item.nextSlot}` }))
   }
-  return [{ title: '图文中心', desc: '后续可接打印任务、装订和取件节点。' }]
+  return []
 })
 
 function jumpToModule() {

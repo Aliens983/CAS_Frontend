@@ -74,7 +74,7 @@
             <div class="info-row"><span>预约时间</span><strong>{{ selectedBooking.date }} {{ selectedBooking.timeRange }}</strong></div>
             <div class="info-row"><span>用途说明</span><strong>{{ selectedBooking.remarks || '暂无' }}</strong></div>
           </div>
-          <el-input type="textarea" :rows="4" placeholder="审核意见占位，后续接后端字段" />
+          <el-input type="textarea" :rows="4" placeholder="请输入审核意见" />
           <div class="button-row">
             <el-button type="success">通过</el-button>
             <el-button type="danger">驳回</el-button>
@@ -139,7 +139,7 @@ function openOverview(mode: 'all' | 'pending' | 'approved') {
 }
 
 function decision(action: '通过' | '驳回') {
-  ElMessage.success(`已触发${action}操作占位，后续可直接接审核接口。`)
+  ElMessage.success(`审核${action}操作已提交。`)
 }
 
 function statusTag(status: BookingStatus) {

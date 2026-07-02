@@ -83,7 +83,7 @@
       </template>
     </el-drawer>
 
-    <el-drawer v-model="createDrawer" title="新增服务占位表单" size="480px">
+    <el-drawer v-model="createDrawer" title="新增服务" size="480px">
       <el-form label-position="top">
         <el-form-item label="服务名称"><el-input placeholder="后续接创建接口" /></el-form-item>
         <el-form-item label="服务分类"><el-input /></el-form-item>
@@ -155,7 +155,6 @@ function openAccess(item: ServiceCard) {
   overviewItems.value = [
     `业务分类：${item.category}`,
     `开放范围：${item.location}`,
-    '后续可在这里接服务开关、权限范围和接口联调信息。',
   ]
   overviewVisible.value = true
 }

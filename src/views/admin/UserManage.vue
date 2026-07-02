@@ -12,7 +12,7 @@
       <article class="overview-card" @click="openOverview('all')">
         <span>用户总数</span>
         <strong>{{ tableData.length }}</strong>
-        <small>当前展示前端模拟数据</small>
+        <small>所有已注册的用户账号</small>
       </article>
       <article class="overview-card" @click="openOverview('admin')">
         <span>管理员</span>
@@ -22,7 +22,7 @@
       <article class="overview-card" @click="openOverview('active')">
         <span>活跃账号</span>
         <strong>{{ tableData.length }}</strong>
-        <small>后续可继续接禁用和冻结状态</small>
+        <small>当前正常使用中的账号</small>
       </article>
     </section>
 

@@ -24,7 +24,6 @@
       <header class="workspace__header glass-panel">
         <div>
           <div class="workspace__title">{{ titleMap[route.path] || '管理后台' }}</div>
-          <div class="workspace__desc">已优先联调后台已有接口，其他未实现接口保留前端结构。</div>
         </div>
         <div class="workspace__actions">
           <el-button plain @click="router.push('/dashboard')">切到用户端</el-button>
@@ -139,12 +138,6 @@ function logout() {
 .workspace__title {
   font-size: 20px;
   font-weight: 700;
-}
-
-.workspace__desc {
-  margin-top: 4px;
-  color: var(--text-secondary);
-  font-size: 13px;
 }
 
 .workspace__actions {

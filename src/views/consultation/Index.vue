@@ -99,7 +99,7 @@ function showAvailableConsultants() {
 
 function reserve(consultant: Consultant) {
   selectedConsultant.value = consultant
-  ElMessage.success(`已打开“${consultant.name}”的预约入口，后续可直接接入咨询提交接口。`)
+  ElMessage.success(`已打开“${consultant.name}”的预约窗口。`)
 }
 </script>
 

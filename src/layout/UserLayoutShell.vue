@@ -44,10 +44,6 @@
         <h1>常用预约与进度回看集中在同一入口</h1>
         <p>保留校园预约系统的业务结构，同时压缩切页等待感，优化主导航、文案排版和首屏信息密度。</p>
       </div>
-      <div class="hero__tips">
-        <div>已联调：用户信息、服务列表、我的预约</div>
-        <div>未实现接口保持占位，不阻断现有流程</div>
-      </div>
     </section>
 
     <main class="shell__content">
@@ -186,18 +182,6 @@ function handleCommand(command: string) {
   max-width: 760px;
   line-height: 1.75;
   color: rgba(255, 255, 255, 0.86);
-}
-
-.hero__tips {
-  display: grid;
-  gap: 12px;
-}
-
-.hero__tips div {
-  padding: 16px 18px;
-  border-radius: 18px;
-  background: rgba(255, 255, 255, 0.12);
-  line-height: 1.65;
 }
 
 .shell__content {

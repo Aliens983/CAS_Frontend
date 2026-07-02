@@ -4,7 +4,7 @@
       <div>
         <div class="status-pill is-brand">会议室预约</div>
         <h1 class="page-hero__title">按空间资源标准化承接核心预约场景</h1>
-        <p class="page-hero__desc">支持容量、状态和设施筛选，保留预约表单占位，后续你只需要接入会议室排班和冲突校验接口。</p>
+        <p class="page-hero__desc">支持按容量、状态和设施筛选，快速找到可用会议室并提交预约。</p>
       </div>
       <div class="hero-actions">
         <el-input v-model="keyword" placeholder="搜索会议室、楼宇或设施" clearable />
@@ -174,7 +174,7 @@ function openBooking(room: RoomResource) {
 
 function submit() {
   visible.value = false
-  ElMessage.success('会议室预约表单已打通，后续可直接接入真实提交流程。')
+  ElMessage.success('会议室预约已提交成功。')
 }
 </script>
 

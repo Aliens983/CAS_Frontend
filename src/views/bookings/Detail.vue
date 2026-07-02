@@ -5,7 +5,7 @@
         <div class="status-pill is-brand">{{ detail.bookingNo }}</div>
         <h1 class="page-hero__title">{{ detail.serviceName }}</h1>
         <p class="page-hero__desc">
-          当前页面包含基础详情、审批流、申请备注和状态展示，后续可直接接入后端详情接口。
+          预约详情、审批进度与状态追踪。
         </p>
       </div>
       <el-tag size="large" :type="tagType">{{ statusLabel }}</el-tag>

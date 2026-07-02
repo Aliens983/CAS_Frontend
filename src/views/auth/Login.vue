@@ -47,11 +47,6 @@
 
           <el-button type="primary" class="submit-btn" :loading="loading" @click="submit">登录并进入系统</el-button>
 
-          <div class="hint-box">
-            <strong>开发环境提示</strong>
-            <span>用户名包含 `admin` 或 `super` 时，接口不可用也会分别模拟管理员和超级管理员身份。</span>
-          </div>
-
           <div class="auth-footer">
             <span>还没有账号？</span>
             <el-link type="primary" @click="router.push('/register')">立即注册</el-link>

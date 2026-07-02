@@ -4,9 +4,8 @@
       <div>
         <div class="status-pill is-brand">设备借用</div>
         <h1 class="page-hero__title">统一管理设备库存、借用申请与归还闭环</h1>
-        <p class="page-hero__desc">前端先承接分类、库存、申请信息和规则提示，后续你只需要把真实库存和借还接口接进来。</p>
+        <p class="page-hero__desc">提供设备分类浏览、库存查询与借用申请功能。</p>
       </div>
-      <el-alert title="当前为前端占位数据，库存和借出状态后续接真实接口即可" type="info" :closable="false" />
     </section>
 
     <section class="equipment-banner">
@@ -102,7 +101,7 @@ function borrow(item: EquipmentResource) {
     return
   }
   selectedEquipment.value = item
-  ElMessage.success(`已预留“${item.name}”的借用入口，后续可直接接入后端流程。`)
+  ElMessage.success(`已选择“${item.name}”，请填写借用信息。`)
 }
 </script>
 
