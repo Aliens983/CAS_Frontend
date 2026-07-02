@@ -125,6 +125,7 @@
   height: 92px;
   border-radius: 50%;
   background: radial-gradient(circle, rgba(20, 88, 212, 0.08), rgba(20, 88, 212, 0));
+  pointer-events: none;
 }
 
 .overview-card:hover {

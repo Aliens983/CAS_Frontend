@@ -106,7 +106,7 @@
       </el-card>
     </section>
 
-    <el-dialog v-model="detailVisible" :title="detailTitle" width="620px">
+    <el-dialog v-if="detailVisible" :model-value="true" :title="detailTitle" width="620px" @close="detailVisible = false">
       <div class="dialog-list">
         <div v-for="item in detailItems" :key="item" class="dialog-card">{{ item }}</div>
       </div>
@@ -220,6 +220,7 @@ function openRisk(item: { title: string; desc: string; level: string }) {
   background:
     radial-gradient(circle at 18% 20%, rgba(255, 255, 255, 0.12), transparent 18%),
     linear-gradient(140deg, transparent 14%, rgba(255, 255, 255, 0.08) 42%, transparent 72%);
+  pointer-events: none;
 }
 
 .admin-hero::after {
@@ -231,6 +232,7 @@ function openRisk(item: { title: string; desc: string; level: string }) {
   border-radius: 50%;
   background: radial-gradient(circle, rgba(59, 130, 246, 0.24), rgba(59, 130, 246, 0));
   animation: adminGlow 8s ease-in-out infinite;
+  pointer-events: none;
 }
 
 .admin-hero__main,
@@ -321,6 +323,7 @@ function openRisk(item: { title: string; desc: string; level: string }) {
   height: 96px;
   border-radius: 50%;
   background: radial-gradient(circle, rgba(20, 88, 212, 0.08), rgba(20, 88, 212, 0));
+  pointer-events: none;
 }
 
 .metric-panel:hover {

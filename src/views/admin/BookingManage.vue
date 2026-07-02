@@ -58,7 +58,7 @@
       </div>
     </el-card>
 
-    <el-dialog v-model="overviewVisible" :title="overviewTitle" width="560px">
+    <el-dialog v-if="overviewVisible" :model-value="true" :title="overviewTitle" width="560px" @close="overviewVisible = false">
       <div class="dialog-list">
         <div v-for="item in overviewItems" :key="item" class="dialog-card">{{ item }}</div>
       </div>
@@ -154,7 +154,7 @@ function statusText(status: BookingStatus) {
 <style scoped lang="scss">
 .admin-overview { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
 .overview-card { position: relative; display: grid; gap: 8px; padding: 22px; border-radius: 22px; background: rgba(255,255,255,.92); border: 1px solid var(--border-soft); box-shadow: var(--shadow-card); overflow: hidden; cursor: pointer; transition: transform .26s ease, box-shadow .26s ease; }
-.overview-card::after { content: ''; position: absolute; inset: auto -24px -24px auto; width: 92px; height: 92px; border-radius: 50%; background: radial-gradient(circle, rgba(20,88,212,.08), rgba(20,88,212,0)); }
+.overview-card::after { content: ''; position: absolute; inset: auto -24px -24px auto; width: 92px; height: 92px; border-radius: 50%; background: radial-gradient(circle, rgba(20,88,212,.08), rgba(20,88,212,0)); pointer-events: none; }
 .overview-card:hover { transform: translateY(-6px); box-shadow: var(--shadow-card-hover); }
 .overview-card span, .overview-card small { color: var(--text-secondary); }
 .overview-card strong { font-size: 34px; }

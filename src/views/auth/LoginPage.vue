@@ -4,25 +4,26 @@
       <section class="auth-hero">
         <span class="status-pill is-brand">性能已优化</span>
         <h1>校园预约系统</h1>
-        <p>登录后按角色分流到用户端或管理端。当前前端优先联调了登录、用户信息、服务列表和预约状态接口。</p>
+        <p>{{ resetMode ? '通过邮箱验证码重置您的密码。' : '登录后按角色分流到用户端或管理端。' }}</p>
       </section>
 
-      <section class="auth-card">
+      <!-- 登录表单 -->
+      <section v-if="!resetMode" class="auth-card">
         <div class="auth-card__head">
           <h2>登录</h2>
           <p>后端当前以邮箱 + 密码登录，验证码图片已接通。</p>
         </div>
 
-        <el-form ref="formRef" :model="form" :rules="rules" size="large">
+        <el-form ref="loginFormRef" :model="loginForm" :rules="loginRules" size="large">
           <el-form-item prop="email">
-            <el-input v-model="form.email" placeholder="邮箱" />
+            <el-input v-model="loginForm.email" placeholder="邮箱" />
           </el-form-item>
           <el-form-item prop="password">
-            <el-input v-model="form.password" type="password" show-password placeholder="密码" />
+            <el-input v-model="loginForm.password" type="password" show-password placeholder="密码" />
           </el-form-item>
           <el-form-item prop="captcha">
             <div class="captcha-row">
-              <el-input v-model="form.captcha" placeholder="图形验证码" />
+              <el-input v-model="loginForm.captcha" placeholder="图形验证码" />
               <div class="captcha-box" @click="refreshCaptcha">
                 <img v-if="captchaImage" :src="captchaImage" alt="captcha" />
                 <span v-else>获取验证码</span>
@@ -30,11 +31,44 @@
             </div>
           </el-form-item>
 
-          <el-button type="primary" class="submit-btn" :loading="loading" @click="submit">登录并进入系统</el-button>
+          <el-button type="primary" class="submit-btn" :loading="loading" @click="handleLogin">登录并进入系统</el-button>
 
           <div class="auth-footer">
-            <span>还没有账号？</span>
+            <el-link type="primary" @click="resetMode = true">忘记密码？</el-link>
             <el-link type="primary" @click="router.push('/register')">去注册</el-link>
+          </div>
+        </el-form>
+      </section>
+
+      <!-- 重置密码表单 -->
+      <section v-else class="auth-card">
+        <div class="auth-card__head">
+          <h2>重置密码</h2>
+          <p>输入邮箱获取验证码，设置新密码后登录。</p>
+        </div>
+
+        <el-form ref="resetFormRef" :model="resetForm" :rules="resetRules" size="large">
+          <el-form-item prop="email">
+            <el-input v-model="resetForm.email" placeholder="邮箱" />
+          </el-form-item>
+          <el-form-item prop="code">
+            <div class="captcha-row" style="grid-template-columns: 1fr auto">
+              <el-input v-model="resetForm.code" placeholder="邮箱验证码" />
+              <el-button :loading="sendingCode" @click="sendResetCode">发送验证码</el-button>
+            </div>
+          </el-form-item>
+          <el-form-item prop="password">
+            <el-input v-model="resetForm.password" type="password" show-password placeholder="新密码" />
+          </el-form-item>
+          <el-form-item prop="confirmPassword">
+            <el-input v-model="resetForm.confirmPassword" type="password" show-password placeholder="确认新密码" />
+          </el-form-item>
+
+          <el-button type="primary" class="submit-btn" :loading="loading" @click="handleReset">确认重置</el-button>
+
+          <div class="auth-footer">
+            <span></span>
+            <el-link type="primary" @click="resetMode = false">返回登录</el-link>
           </div>
         </el-form>
       </section>
@@ -53,20 +87,37 @@ import { loadUserProfile } from '@/services/portal'
 
 const router = useRouter()
 const userStore = useUserStore()
-const formRef = ref<FormInstance>()
+const loginFormRef = ref<FormInstance>()
+const resetFormRef = ref<FormInstance>()
 const loading = ref(false)
+const sendingCode = ref(false)
 const captchaImage = ref('')
+const resetMode = ref(false)
 
-const form = reactive({
+const loginForm = reactive({
   email: '',
   password: '',
   captcha: '',
 })
 
-const rules: FormRules = {
+const resetForm = reactive({
+  email: '',
+  code: '',
+  password: '',
+  confirmPassword: '',
+})
+
+const loginRules: FormRules = {
   email: [{ required: true, message: '请输入邮箱', trigger: 'blur' }],
   password: [{ required: true, message: '请输入密码', trigger: 'blur' }],
   captcha: [{ required: true, message: '请输入图形验证码', trigger: 'blur' }],
+}
+
+const resetRules: FormRules = {
+  email: [{ required: true, message: '请输入邮箱', trigger: 'blur' }],
+  code: [{ required: true, message: '请输入邮箱验证码', trigger: 'blur' }],
+  password: [{ required: true, message: '请输入新密码', trigger: 'blur' }],
+  confirmPassword: [{ required: true, message: '请再次输入新密码', trigger: 'blur' }],
 }
 
 async function refreshCaptcha() {
@@ -75,17 +126,35 @@ async function refreshCaptcha() {
     captchaImage.value = response.image
   } catch {
     captchaImage.value = ''
+    ElMessage.warning('验证码加载失败，点击刷新重试')
   }
 }
 
-async function submit() {
-  await formRef.value?.validate()
+async function sendResetCode() {
+  if (!resetForm.email) {
+    ElMessage.warning('请先输入邮箱')
+    return
+  }
+  sendingCode.value = true
+  try {
+    await request.post('/email', { to: resetForm.email })
+    ElMessage.success('验证码已发送')
+  } catch (error: unknown) {
+    const err = error as { message?: string }
+    ElMessage.error(err.message || '验证码发送失败')
+  } finally {
+    sendingCode.value = false
+  }
+}
+
+async function handleLogin() {
+  await loginFormRef.value?.validate()
   loading.value = true
 
   try {
     const loginResult = await request.post<string>('/login', {
-      email: form.email,
-      password: form.password,
+      email: loginForm.email,
+      password: loginForm.password,
     })
 
     const token = extractToken(loginResult) || String(loginResult || '')
@@ -96,6 +165,34 @@ async function submit() {
   } catch (error: unknown) {
     const err = error as { message?: string }
     ElMessage.error(err.message || '登录失败，请检查账号、密码或身份接口')
+  } finally {
+    loading.value = false
+  }
+}
+
+async function handleReset() {
+  await resetFormRef.value?.validate()
+  if (resetForm.password !== resetForm.confirmPassword) {
+    ElMessage.warning('两次密码输入不一致')
+    return
+  }
+
+  loading.value = true
+  try {
+    await request.post('/login/reset', {
+      email: resetForm.email,
+      code: resetForm.code,
+      password: resetForm.password,
+    })
+    ElMessage.success('密码重置成功，请使用新密码登录')
+    resetForm.email = ''
+    resetForm.code = ''
+    resetForm.password = ''
+    resetForm.confirmPassword = ''
+    resetMode.value = false
+  } catch (error: unknown) {
+    const err = error as { message?: string }
+    ElMessage.error(err.message || '密码重置失败，请稍后重试')
   } finally {
     loading.value = false
   }

@@ -106,7 +106,7 @@
       </el-card>
     </section>
 
-    <el-dialog v-model="detailVisible" :title="detailTitle" width="620px">
+    <el-dialog v-if="detailVisible" :model-value="true" :title="detailTitle" width="620px" @close="detailVisible = false">
       <div class="dialog-list">
         <div v-for="item in detailItems" :key="item" class="dialog-card">{{ item }}</div>
       </div>

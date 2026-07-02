@@ -138,6 +138,7 @@ a {
   border-radius: 50%;
   background: radial-gradient(circle, rgba(255, 255, 255, 0.26), rgba(255, 255, 255, 0));
   animation: pulseFloat 7.5s ease-in-out infinite;
+  pointer-events: none;
 }
 
 .page-hero::after {
@@ -147,6 +148,7 @@ a {
   background: linear-gradient(120deg, transparent 10%, rgba(255, 255, 255, 0.12) 35%, transparent 62%);
   transform: translateX(-120%);
   animation: sheenPass 8s ease-in-out infinite 1.2s;
+  pointer-events: none;
 }
 
 .page-hero__title {
@@ -199,6 +201,7 @@ a {
   background: linear-gradient(180deg, rgba(255, 255, 255, 0.54), rgba(255, 255, 255, 0));
   opacity: 0;
   transition: opacity 0.28s ease;
+  pointer-events: none;
 }
 
 .panel-card:hover {
@@ -296,6 +299,7 @@ a {
   background: radial-gradient(circle, rgba(20, 88, 212, 0.08), rgba(20, 88, 212, 0));
   transition: transform 0.28s ease, opacity 0.28s ease;
   opacity: 0.5;
+  pointer-events: none;
 }
 
 .resource-card::after {
@@ -305,6 +309,7 @@ a {
   background: linear-gradient(135deg, rgba(20, 88, 212, 0.08), transparent 45%, rgba(255, 255, 255, 0.34));
   opacity: 0;
   transition: opacity 0.28s ease;
+  pointer-events: none;
 }
 
 .resource-card:hover {
@@ -360,6 +365,7 @@ a {
   background: linear-gradient(180deg, rgba(255, 255, 255, 0.26), rgba(255, 255, 255, 0));
   transform: rotate(24deg);
   animation: badgeGlow 5.5s ease-in-out infinite;
+  pointer-events: none;
 }
 
 .info-list {
