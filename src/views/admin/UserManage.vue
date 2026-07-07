@@ -1,10 +1,10 @@
 <template>
   <div class="page-shell">
-    <section class="page-hero">
-      <div>
-        <div class="status-pill is-brand">用户与权限</div>
-        <h1 class="page-hero__title">管理账号、部门和角色授权</h1>
-        <p class="page-hero__desc">用户治理页改成更接近企业权限台的表达，适合后续接用户分页、角色授权和账号状态管理接口。</p>
+    <section class="page-hero page-hero--single">
+      <div class="page-hero__main">
+        <span class="page-hero__chip">用户管理</span>
+        <h1 class="page-hero__title">账号管理与角色授权</h1>
+        <p class="page-hero__desc">管理平台内的所有用户账号，支持角色分配、权限设置与账号信息查询。</p>
       </div>
     </section>
 
@@ -72,12 +72,11 @@
             <h3>{{ selectedUser.username }}</h3>
             <p class="muted">{{ selectedUser.department }}</p>
           </div>
-          <el-select :model-value="selectedUser.role" style="width: 100%">
+          <el-select v-model="selectedRole" style="width: 100%">
             <el-option label="普通用户" value="user" />
             <el-option label="管理员" value="admin" />
-            <el-option label="超级管理员" value="super_admin" />
           </el-select>
-          <el-button type="primary" style="width: 100%">保存角色</el-button>
+          <el-button type="primary" style="width: 100%" :loading="roleSaving" @click="saveRole">保存角色</el-button>
         </div>
       </template>
     </el-drawer>
@@ -87,6 +86,7 @@
 <script setup lang="ts">
 import { computed, ref, onMounted } from 'vue'
 import { ElMessage } from 'element-plus'
+import request from '@/utils/request'
 import { fetchAdminUsers } from '@/services/campus'
 import type { UserInfo, UserRole } from '@/types'
 
@@ -95,8 +95,10 @@ const overviewVisible = ref(false)
 const overviewTitle = ref('')
 const overviewItems = ref<string[]>([])
 const selectedUser = ref<UserInfo | null>(null)
+const selectedRole = ref<UserRole>('user')
 const tableData = ref<UserInfo[]>([])
 const loading = ref(false)
+const roleSaving = ref(false)
 
 const filteredUsers = computed(() =>
   tableData.value.filter((item) => [item.username, item.department, item.email].join('|').toLowerCase().includes(keyword.value.toLowerCase())),
@@ -105,9 +107,21 @@ const adminCount = computed(() => tableData.value.filter((item) => item.role ===
 const userDrawerVisible = computed({
   get: () => Boolean(selectedUser.value),
   set: (value: boolean) => {
-    if (!value) selectedUser.value = null
+    if (!value) {
+      selectedUser.value = null
+      selectedRole.value = 'user'
+    }
   },
 })
+
+// 打开抽屉时初始化角色选择
+const unwatchUser = computed(() => {
+  if (selectedUser.value) {
+    selectedRole.value = selectedUser.value.role === 'super_admin' ? 'admin' : (selectedUser.value.role === 'admin' ? 'admin' : 'user')
+  }
+  return selectedUser.value
+})
+void unwatchUser
 
 onMounted(async () => {
   loading.value = true
@@ -136,6 +150,33 @@ function detailUser(item: UserInfo) {
   overviewTitle.value = `${item.username} 账号详情`
   overviewItems.value = [`邮箱：${item.email}`, `电话：${item.phone}`, `角色：${roleText(item.role)}`]
   overviewVisible.value = true
+}
+
+async function saveRole() {
+  if (!selectedUser.value) return
+  roleSaving.value = true
+  try {
+    const newRole = selectedRole.value === 'admin' ? 1 : 0
+    const newRoleLabel = selectedRole.value === 'admin' ? 'admin' : 'user'
+    await request.put('/admin/users/role', {
+      userId: selectedUser.value.id,
+      role: newRole,
+    })
+    ElMessage.success(`已将 ${selectedUser.value.username} 的角色修改为 ${selectedRole.value === 'admin' ? '管理员' : '普通用户'}`)
+    // 先关闭抽屉，再本地更新数据避免闪烁
+    const updated = selectedUser.value
+    selectedUser.value = null
+    selectedRole.value = 'user'
+    const idx = tableData.value.findIndex(u => u.id === updated.id)
+    if (idx !== -1) {
+      tableData.value[idx] = { ...tableData.value[idx], role: newRoleLabel as UserRole }
+    }
+  } catch (error: unknown) {
+    const err = error as { message?: string }
+    ElMessage.error(err.message || '修改角色失败')
+  } finally {
+    roleSaving.value = false
+  }
 }
 
 function roleText(role: UserRole) {

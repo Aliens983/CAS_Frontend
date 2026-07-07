@@ -25,12 +25,12 @@
       </el-card>
 
       <el-card class="panel-card span-4">
-        <template #header><div class="section-head"><h3 class="section-head__title">当前交付说明</h3></div></template>
+        <template #header><div class="section-head"><h3 class="section-head__title">服务详情</h3></div></template>
         <div class="info-list">
-          <div class="info-row"><span>前端状态</span><strong>页面与交互已补齐</strong></div>
-          <div class="info-row"><span>接口状态</span><strong>支持后续替换</strong></div>
-          <div class="info-row"><span>审批能力</span><strong>已预留后台位</strong></div>
-          <div class="info-row"><span>适合后续</span><strong>接口联调 / 权限串接</strong></div>
+          <div class="info-row"><span>服务编号</span><strong>{{ service.code }}</strong></div>
+          <div class="info-row"><span>服务分类</span><strong>{{ service.category }}</strong></div>
+          <div class="info-row"><span>所在位置</span><strong>{{ service.location }}</strong></div>
+          <div class="info-row"><span>当前状态</span><strong>{{ service.status === 'available' ? '可预约' : '维护中' }}</strong></div>
         </div>
         <el-divider />
         <div class="tag-wrap">
@@ -85,17 +85,17 @@ onMounted(async () => {
     }
 
     if (roomsData.status === 'fulfilled' && roomsData.value) {
-      const list = Array.isArray(roomsData.value) ? roomsData.value : (roomsData.value?.data || [])
+      const list = Array.isArray(roomsData.value) ? roomsData.value : (roomsData.value?.records || roomsData.value?.data || [])
       rooms.value = Array.isArray(list) ? list : []
     }
 
     if (equipmentData.status === 'fulfilled' && equipmentData.value) {
-      const list = Array.isArray(equipmentData.value) ? equipmentData.value : (equipmentData.value?.data || [])
+      const list = Array.isArray(equipmentData.value) ? equipmentData.value : (equipmentData.value?.records || equipmentData.value?.data || [])
       equipments.value = Array.isArray(list) ? list : []
     }
 
     if (consultationData.status === 'fulfilled' && consultationData.value) {
-      const list = Array.isArray(consultationData.value) ? consultationData.value : (consultationData.value?.data || [])
+      const list = Array.isArray(consultationData.value) ? consultationData.value : (consultationData.value?.records || consultationData.value?.data || [])
       consultants.value = Array.isArray(list) ? list : []
     }
   } catch {
@@ -106,10 +106,10 @@ onMounted(async () => {
 })
 
 const moduleSteps = [
-  { phase: '01', title: '服务展示', desc: '面向用户展示资源、能力、状态和规则。' },
-  { phase: '02', title: '预约发起', desc: '支持提交时间、用途、联系方式等表单数据。' },
-  { phase: '03', title: '审批处理', desc: '后台统一处理待审申请，便于接后端工作流。' },
-  { phase: '04', title: '消息回流', desc: '审批结果、系统提醒和通知消息统一回流消息中心。' },
+  { phase: '01', title: '服务展示', desc: '面向全校师生展示可用资源、服务能力与预约规则。' },
+  { phase: '02', title: '在线预约', desc: '选择时间、填写用途后提交预约申请，即时确认。' },
+  { phase: '03', title: '审批处理', desc: '管理人员在线审核申请，支持通过、驳回与意见反馈。' },
+  { phase: '04', title: '消息通知', desc: '审批结果和系统提醒实时推送至消息中心。' },
 ]
 
 const relatedItems = computed(() => {

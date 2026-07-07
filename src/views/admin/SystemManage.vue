@@ -1,30 +1,28 @@
 <template>
   <div class="page-shell">
-    <section class="page-hero">
-      <div>
-        <div class="status-pill is-brand">系统设置</div>
-        <h1 class="page-hero__title">统一配置预约策略、通知规则和业务约束</h1>
-        <p class="page-hero__desc">
-          这一页作为全局配置中枢，后续适合接系统参数、预约规则、字典项和通知策略接口。
-        </p>
+    <section class="page-hero page-hero--single">
+      <div class="page-hero__main">
+        <span class="page-hero__chip">系统设置</span>
+        <h1 class="page-hero__title">预约策略与通知配置</h1>
+        <p class="page-hero__desc">统一管理系统运行参数，配置预约策略、通知规则与业务约束条件。</p>
       </div>
     </section>
 
     <section class="admin-overview">
       <article class="overview-card">
         <span>策略分组</span>
-        <strong>3</strong>
+        <strong>{{ enabledNotifications }}</strong>
         <small>预约、通知、约束统一管理</small>
       </article>
       <article class="overview-card">
         <span>启用通知</span>
-        <strong>2</strong>
+        <strong>{{ enabledNotifications }}</strong>
         <small>当前保留站内信和邮件提醒</small>
       </article>
       <article class="overview-card">
         <span>配置状态</span>
-        <strong>稳定</strong>
-        <small>适合继续接入后端配置读写接口</small>
+        <strong>运行中</strong>
+        <small>系统运行稳定，配置即时生效</small>
       </article>
     </section>
 
@@ -41,14 +39,14 @@
               <strong>最早可预约时间</strong>
               <p>用于控制用户最远提前预约范围</p>
             </div>
-            <el-input model-value="提前 7 天" />
+            <el-input v-model="settings.advanceDays" />
           </div>
           <div class="setting-item">
             <div>
               <strong>默认审批模式</strong>
               <p>不同业务可继续扩展为多级审批策略</p>
             </div>
-            <el-select model-value="部门审批">
+            <el-select v-model="settings.approvalMode">
               <el-option label="部门审批" value="部门审批" />
               <el-option label="系统自动通过" value="系统自动通过" />
             </el-select>
@@ -58,7 +56,7 @@
               <strong>超时自动取消</strong>
               <p>未确认或逾期使用的预约自动释放资源</p>
             </div>
-            <el-switch model-value />
+            <el-switch v-model="settings.autoCancel" />
           </div>
         </div>
       </el-card>
@@ -75,27 +73,44 @@
               <strong>站内通知</strong>
               <p>审批结果、系统公告和预约提醒</p>
             </div>
-            <el-switch model-value />
+            <el-switch v-model="settings.siteNotice" />
           </div>
           <div class="setting-item setting-item--switch">
             <div>
               <strong>短信提醒</strong>
               <p>适合时效性更高的审核和即将开始通知</p>
             </div>
-            <el-switch />
+            <el-switch v-model="settings.smsNotice" />
           </div>
           <div class="setting-item setting-item--switch">
             <div>
               <strong>邮件通知</strong>
               <p>适合留痕和正式通知场景</p>
             </div>
-            <el-switch model-value />
+            <el-switch v-model="settings.emailNotice" />
           </div>
         </div>
       </el-card>
     </section>
   </div>
 </template>
+
+<script setup lang="ts">
+import { computed, reactive } from 'vue'
+
+const settings = reactive({
+  advanceDays: '提前 7 天',
+  approvalMode: '部门审批',
+  autoCancel: true,
+  siteNotice: true,
+  smsNotice: false,
+  emailNotice: true,
+})
+
+const enabledNotifications = computed(() =>
+  [settings.siteNotice, settings.smsNotice, settings.emailNotice].filter(Boolean).length
+)
+</script>
 
 <style scoped lang="scss">
 .admin-overview {

@@ -49,7 +49,7 @@
           <el-timeline>
             <el-timeline-item timestamp="提交申请">已进入统一预约受理队列。</el-timeline-item>
             <el-timeline-item timestamp="部门审核">根据业务类型流转到对应管理员审核环节。</el-timeline-item>
-            <el-timeline-item timestamp="结果通知">审批结果会回流消息中心，并支持后续接短信或站内提醒。</el-timeline-item>
+            <el-timeline-item timestamp="结果通知">审批结果将推送至消息中心，并通过站内信和邮件及时通知您。</el-timeline-item>
           </el-timeline>
         </div>
       </el-card>

@@ -1,12 +1,14 @@
 <template>
   <div class="page-shell">
-    <section class="page-hero">
-      <div>
-        <div class="status-pill is-brand">服务治理</div>
-        <h1 class="page-hero__title">统一维护服务目录、状态和接入说明</h1>
-        <p class="page-hero__desc">这里适合作为后续服务管理接口的承接位，目录概览、治理动作和新增服务入口都已经统一到企业级页面结构里。</p>
+    <section class="page-hero page-hero--single">
+      <div class="page-hero__main">
+        <span class="page-hero__chip">服务治理</span>
+        <h1 class="page-hero__title">服务目录与状态管理</h1>
+        <p class="page-hero__desc">维护服务目录与开放状态，管理各项预约服务的上架、编辑与停用。</p>
+        <div class="page-hero__actions">
+          <el-button type="primary" size="large" @click="createDrawer = true">新增服务</el-button>
+        </div>
       </div>
-      <el-button type="primary" size="large" @click="createDrawer = true">新增服务</el-button>
     </section>
 
     <section class="admin-overview">
@@ -75,29 +77,30 @@
     <el-drawer v-model="serviceDrawerVisible" title="服务编辑" size="460px">
       <template v-if="selectedService">
         <el-form label-position="top">
-          <el-form-item label="服务名称"><el-input :model-value="selectedService.name" /></el-form-item>
-          <el-form-item label="服务分类"><el-input :model-value="selectedService.category" /></el-form-item>
-          <el-form-item label="服务说明"><el-input type="textarea" :rows="5" :model-value="selectedService.description" /></el-form-item>
+          <el-form-item label="服务名称"><el-input v-model="editForm.name" /></el-form-item>
+          <el-form-item label="服务分类"><el-input v-model="editForm.category" /></el-form-item>
+          <el-form-item label="服务说明"><el-input type="textarea" :rows="5" v-model="editForm.description" /></el-form-item>
         </el-form>
-        <el-button type="primary" style="width: 100%">保存修改</el-button>
+        <el-button type="primary" style="width: 100%" :loading="saving" @click="saveEdit">保存修改</el-button>
       </template>
     </el-drawer>
 
     <el-drawer v-model="createDrawer" title="新增服务" size="480px">
       <el-form label-position="top">
-        <el-form-item label="服务名称"><el-input placeholder="后续接创建接口" /></el-form-item>
-        <el-form-item label="服务分类"><el-input /></el-form-item>
-        <el-form-item label="服务说明"><el-input type="textarea" :rows="5" /></el-form-item>
-        <el-form-item label="开放范围"><el-input /></el-form-item>
+        <el-form-item label="服务名称"><el-input v-model="createForm.name" placeholder="请输入服务名称" /></el-form-item>
+        <el-form-item label="服务分类"><el-input v-model="createForm.category" placeholder="如：空间资源、设备资源、咨询服务" /></el-form-item>
+        <el-form-item label="服务说明"><el-input type="textarea" :rows="5" v-model="createForm.description" placeholder="请输入服务说明" /></el-form-item>
+        <el-form-item label="开放范围"><el-input v-model="createForm.location" placeholder="如：全校师生" /></el-form-item>
       </el-form>
-      <el-button type="primary" style="width: 100%">保存</el-button>
+      <el-button type="primary" style="width: 100%" :loading="saving" @click="saveCreate">保存</el-button>
     </el-drawer>
   </div>
 </template>
 
 <script setup lang="ts">
-import { computed, ref, onMounted } from 'vue'
+import { computed, reactive, ref, onMounted } from 'vue'
 import { ElMessage } from 'element-plus'
+import request from '@/utils/request'
 import { fetchServiceCards } from '@/services/campus'
 import type { ServiceCard } from '@/types'
 
@@ -110,6 +113,10 @@ const overviewItems = ref<string[]>([])
 const selectedService = ref<ServiceCard | null>(null)
 const services = ref<ServiceCard[]>([])
 const loading = ref(false)
+const saving = ref(false)
+
+const editForm = reactive({ name: '', category: '', description: '' })
+const createForm = reactive({ name: '', category: '', description: '', location: '' })
 
 const filteredServices = computed(() =>
   services.value.filter((item) => {
@@ -126,6 +133,18 @@ const serviceDrawerVisible = computed({
     if (!value) selectedService.value = null
   },
 })
+
+// 打开编辑抽屉时初始化表单
+const unwatchSelected = computed(() => {
+  if (selectedService.value) {
+    editForm.name = selectedService.value.name
+    editForm.category = selectedService.value.category
+    editForm.description = selectedService.value.description
+  }
+  return selectedService.value
+})
+// 触发 computed 副作用
+void unwatchSelected
 
 onMounted(async () => {
   loading.value = true
@@ -157,6 +176,56 @@ function openAccess(item: ServiceCard) {
     `开放范围：${item.location}`,
   ]
   overviewVisible.value = true
+}
+
+async function saveEdit() {
+  if (!selectedService.value) return
+  saving.value = true
+  try {
+    await request.put(`/app/services/${selectedService.value.id}`, {
+      serviceName: editForm.name,
+      serviceDescribe: editForm.description,
+    })
+    ElMessage.success('服务修改成功')
+    // 先关闭抽屉，再本地更新数据避免闪烁
+    const updated = selectedService.value
+    selectedService.value = null
+    const idx = services.value.findIndex(s => s.id === updated.id)
+    if (idx !== -1) {
+      services.value[idx] = { ...services.value[idx], name: editForm.name, description: editForm.description }
+    }
+  } catch (error: unknown) {
+    const err = error as { message?: string }
+    ElMessage.error(err.message || '修改失败')
+  } finally {
+    saving.value = false
+  }
+}
+
+async function saveCreate() {
+  if (!createForm.name) {
+    ElMessage.warning('请输入服务名称')
+    return
+  }
+  saving.value = true
+  try {
+    await request.post('/admin/services', {
+      serviceName: createForm.name,
+      serviceDescribe: createForm.description,
+    })
+    ElMessage.success('服务创建成功')
+    createDrawer.value = false
+    createForm.name = ''
+    createForm.category = ''
+    createForm.description = ''
+    createForm.location = ''
+    services.value = await fetchServiceCards()
+  } catch (error: unknown) {
+    const err = error as { message?: string }
+    ElMessage.error(err.message || '创建失败')
+  } finally {
+    saving.value = false
+  }
 }
 </script>
 

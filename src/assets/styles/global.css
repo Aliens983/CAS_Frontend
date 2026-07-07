@@ -115,15 +115,13 @@ a {
 
 .page-hero {
   position: relative;
-  display: flex;
-  justify-content: space-between;
-  gap: 20px;
-  padding: 30px;
-  border-radius: var(--radius-2xl);
-  background:
-    linear-gradient(135deg, rgba(20, 88, 212, 0.98), rgba(49, 120, 244, 0.92)),
-    #1458d4;
+  display: grid;
+  grid-template-columns: 1.2fr 0.8fr;
+  gap: 24px;
+  padding: 36px;
+  border-radius: 30px;
   color: #fff;
+  background: linear-gradient(135deg, #0e2647, #1458d4 62%, #52a1ff);
   box-shadow: var(--shadow-card);
   overflow: hidden;
   isolation: isolate;
@@ -132,31 +130,59 @@ a {
 .page-hero::before {
   content: "";
   position: absolute;
-  inset: auto -15% -45% auto;
-  width: 320px;
-  height: 320px;
-  border-radius: 50%;
-  background: radial-gradient(circle, rgba(255, 255, 255, 0.26), rgba(255, 255, 255, 0));
-  animation: pulseFloat 7.5s ease-in-out infinite;
+  inset: 0;
+  background:
+    radial-gradient(circle at 20% 20%, rgba(255,255,255,0.16), transparent 22%),
+    linear-gradient(120deg, transparent 14%, rgba(255,255,255,0.08) 36%, transparent 62%);
   pointer-events: none;
 }
 
 .page-hero::after {
   content: "";
   position: absolute;
-  inset: 0;
-  background: linear-gradient(120deg, transparent 10%, rgba(255, 255, 255, 0.12) 35%, transparent 62%);
-  transform: translateX(-120%);
-  animation: sheenPass 8s ease-in-out infinite 1.2s;
+  inset: auto -60px -60px auto;
+  width: 260px;
+  height: 260px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(255,255,255,0.18), rgba(255,255,255,0));
+  animation: pulseFloat 7.5s ease-in-out infinite;
   pointer-events: none;
+}
+
+.page-hero__main {
+  position: relative;
+  z-index: 1;
+}
+
+.page-hero__panel {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  gap: 12px;
+  padding: 22px;
+  border-radius: 22px;
+  background: rgba(255,255,255,0.1);
+  border: 1px solid rgba(255,255,255,0.12);
+  backdrop-filter: blur(10px);
+}
+
+.page-hero__chip {
+  display: inline-flex;
+  padding: 5px 12px;
+  border-radius: 999px;
+  font-size: 12px;
+  letter-spacing: 0.06em;
+  background: rgba(255,255,255,0.14);
+  margin-bottom: 14px;
 }
 
 .page-hero__title {
   position: relative;
   z-index: 1;
-  margin: 0 0 8px;
-  font-size: 30px;
+  margin: 0 0 10px;
+  font-size: 34px;
   font-weight: 700;
+  line-height: 1.18;
 }
 
 .page-hero__desc {
@@ -164,8 +190,26 @@ a {
   z-index: 1;
   margin: 0;
   max-width: 720px;
-  color: rgba(255, 255, 255, 0.86);
-  line-height: 1.7;
+  color: rgba(255,255,255,0.84);
+  line-height: 1.8;
+}
+
+.page-hero__actions {
+  display: flex;
+  gap: 12px;
+  margin-top: 22px;
+}
+
+.page-hero__actions .el-button {
+  font-weight: 500;
+}
+
+/* 无侧栏的 hero 单列模式 */
+.page-hero--single {
+  grid-template-columns: 1fr;
+}
+.page-hero--single .page-hero__desc {
+  max-width: 760px;
 }
 
 .glass-panel {
@@ -194,24 +238,10 @@ a {
     border-color 0.28s ease;
 }
 
-.panel-card::before {
-  content: "";
-  position: absolute;
-  inset: 0;
-  background: linear-gradient(180deg, rgba(255, 255, 255, 0.54), rgba(255, 255, 255, 0));
-  opacity: 0;
-  transition: opacity 0.28s ease;
-  pointer-events: none;
-}
-
 .panel-card:hover {
   transform: translateY(-6px);
   box-shadow: var(--shadow-card-hover);
   border-color: var(--border-strong);
-}
-
-.panel-card:hover::before {
-  opacity: 1;
 }
 
 .panel-card .el-card__body {
@@ -306,21 +336,21 @@ a {
   content: "";
   position: absolute;
   inset: 0;
-  background: linear-gradient(135deg, rgba(20, 88, 212, 0.08), transparent 45%, rgba(255, 255, 255, 0.34));
+  background: linear-gradient(135deg, rgba(20, 88, 212, 0.06), transparent 55%);
   opacity: 0;
   transition: opacity 0.28s ease;
   pointer-events: none;
 }
 
 .resource-card:hover {
-  transform: translateY(-8px) rotateX(1.5deg);
+  transform: translateY(-6px);
   box-shadow: var(--shadow-card-hover);
   border-color: rgba(20, 88, 212, 0.16);
 }
 
 .resource-card:hover::before {
   transform: scale(1.08);
-  opacity: 0.85;
+  opacity: 1;
 }
 
 .resource-card:hover::after {
@@ -517,7 +547,7 @@ a {
 
 @media (max-width: 960px) {
   .page-hero {
-    flex-direction: column;
+    grid-template-columns: 1fr;
   }
 
   .grid-cards {

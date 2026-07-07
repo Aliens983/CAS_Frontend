@@ -5,17 +5,17 @@ import type { UserInfo } from '@/types'
 export const userAPI = {
   // 获取图形验证码
   getGraphicCaptcha: () => {
-    return request.get('/graphic/get')
+    return request.get('/captcha')
   },
 
   // 登录
   login: (data: { email: string; password: string; captcha?: string }) => {
-    return request.post('/login', data)
+    return request.post('/auth/login', data)
   },
 
   // 注册
   register: (data: { name: string; email: string; password: string; code: string; grade?: string; sex?: string }) => {
-    return request.post('/register/verify-code', data)
+    return request.post('/auth/register', data)
   },
 
   // 登出
@@ -23,24 +23,24 @@ export const userAPI = {
     return Promise.resolve()
   },
 
-  // 获取用户信息
+  // 获取当前用户信息
   getInfo: () => {
-    return request.get('/user')
+    return request.get('/users/me')
   },
 
   // 更新用户信息
   updateInfo: (data: Partial<UserInfo>) => {
-    return request.post('/user/create', data)
+    return request.post('/users', data)
   },
 
   // 修改密码
   changePassword: (data: { oldPassword: string; newPassword: string }) => {
-    return request.put('/user/password', data)
+    return request.put('/users/password', data)
   },
 
   // 发送邮箱验证码
   sendCaptcha: (email: string) => {
-    return request.post('/email', { to: email })
+    return request.post('/auth/verification-code', { to: email })
   }
 }
 
@@ -54,17 +54,17 @@ export const bookingAPI = {
     date?: string
     status?: string
   }) => {
-    return request.get('/book/allService', { params })
+    return request.get('/app/bookings', { params })
   },
 
   // 获取预约详情
   getBooking: (id: string) => {
-    return request.get(`/book/allService/${id}`)
+    return request.get(`/app/bookings/${id}`)
   },
 
   // 创建预约
   createBooking: (data: { serviceIds: number[] }) => {
-    return request.post('/book', data)
+    return request.post('/app/bookings', data)
   },
 
   // 创建会议室预约
@@ -76,7 +76,7 @@ export const bookingAPI = {
     purpose: string
     remarks?: string
   }) => {
-    return request.post('/book/room', data)
+    return request.post('/app/bookings/room', data)
   },
 
   // 创建设备预约
@@ -88,7 +88,7 @@ export const bookingAPI = {
     purpose: string
     remarks?: string
   }) => {
-    return request.post('/book/equipment', data)
+    return request.post('/app/bookings/equipment', data)
   },
 
   // 创建咨询预约
@@ -100,27 +100,27 @@ export const bookingAPI = {
     subject: string
     description: string
   }) => {
-    return request.post('/book/consultation', data)
+    return request.post('/app/bookings/consultation', data)
   },
 
   // 取消预约
   cancelBooking: (bookingId: string) => {
-    return request.post('/book/cancel', { bookingIds: [Number(bookingId)] })
+    return request.patch(`/app/bookings/${bookingId}/cancel`)
   },
 
   // 管理员审批预约
   approveBooking: (bookingId: string, status: 'approved' | 'rejected', remark?: string) => {
     const auditStatus = status === 'approved' ? 1 : 2
     const path = status === 'approved'
-      ? '/admin/service-status/audit/pass'
-      : '/admin/service-status/audit/reject'
-    return request.post(path, { orderId: Number(bookingId), status: auditStatus, reason: remark || '' })
+      ? `/admin/bookings/${bookingId}/approve`
+      : `/admin/bookings/${bookingId}/reject`
+    return request.patch(path, { orderId: Number(bookingId), status: auditStatus, reason: remark || '' })
   }
 }
 
-// 会议室相关API (后端使用 /service)
+// 服务相关API (原会议室/设备查询使用 /services)
 export const roomAPI = {
-  // 获取会议室列表
+  // 获取服务列表
   getRooms: (params: {
     page?: number
     pageSize?: number
@@ -128,22 +128,22 @@ export const roomAPI = {
     capacity?: number
     available?: boolean
   }) => {
-    return request.get('/service', { params })
+    return request.get('/app/services', { params })
   },
 
-  // 获取会议室详情
+  // 获取服务详情
   getRoom: (id: string) => {
-    return request.get(`/service/${id}`)
+    return request.get(`/app/services/${id}`)
   },
 
-  // 获取可用会议室
+  // 获取可用服务
   getAvailableRooms: (params: {
     date: string
     startTime: string
     endTime: string
     capacity?: number
   }) => {
-    return request.get('/service', { params })
+    return request.get('/app/services', { params })
   }
 }
 
@@ -155,13 +155,13 @@ export const equipmentAPI = {
     category?: string
     available?: boolean
   }) => {
-    return request.get('/equipment', { params })
+    return request.get('/app/equipment', { params })
   },
   getCategories: () => {
-    return request.get('/equipment/categories')
+    return request.get('/app/equipment/categories')
   },
   getEquipmentDetail: (id: string) => {
-    return request.get(`/equipment/${id}`)
+    return request.get(`/app/equipment/${id}`)
   }
 }
 
@@ -173,21 +173,18 @@ export const consultationAPI = {
     department?: string
     available?: boolean
   }) => {
-    return request.get('/consultation', { params })
+    return request.get('/app/consultations', { params })
   },
   getConsultant: (id: string) => {
-    return request.get(`/consultation/${id}`)
+    return request.get(`/app/consultations/${id}`)
   },
   getAvailableTime: (consultantId: string, date: string) => {
-    return request.get('/consultation/available', { params: { consultantId, date } })
+    return request.get(`/app/consultations/${consultantId}/slots`, { params: { date } })
   }
 }
 
 // 管理员相关API
 export const adminAPI = {
-  // 获取系统统计 (后端暂无此接口)
-  // getStatistics: () => request.get('/admin/statistics')
-
   // 获取用户列表
   getUsers: (params: {
     page?: number
@@ -196,10 +193,10 @@ export const adminAPI = {
     email?: string
     status?: string
   }) => {
-    return request.get('/user/all_users', { params })
+    return request.get('/users/list', { params })
   },
 
-  // 获取预约管理列表 (使用 service-status)
+  // 获取预约管理列表
   getBookingManagement: (params: {
     page?: number
     pageSize?: number
@@ -207,9 +204,6 @@ export const adminAPI = {
     status?: string
     date?: string
   }) => {
-    return request.get('/admin/service-status', { params })
+    return request.get('/admin/bookings', { params })
   },
-
-  // 获取日志列表 (后端暂无此接口)
-  // getLogs: (params) => request.get('/admin/logs', { params })
 }

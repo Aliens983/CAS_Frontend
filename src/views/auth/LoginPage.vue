@@ -11,7 +11,7 @@
       <section v-if="!resetMode" class="auth-card">
         <div class="auth-card__head">
           <h2>登录</h2>
-          <p>后端当前以邮箱 + 密码登录，验证码图片已接通。</p>
+          <p>安全可靠的校园统一身份认证入口，支持邮箱登录与图形验证码校验。</p>
         </div>
 
         <el-form ref="loginFormRef" :model="loginForm" :rules="loginRules" size="large">
@@ -122,8 +122,11 @@ const resetRules: FormRules = {
 
 async function refreshCaptcha() {
   try {
-    const response = await request.get('/graphic/get') as unknown as { uuid: string; image: string }
-    captchaImage.value = response.image
+    const response = await request.get('/captcha') as unknown as { uuid: string; imageUrl: string }
+    // 后端返回的是绝对URL如 http://localhost:18080/uploads/xxx.png
+    // 需转换为走Vite代理的路径 /api/uploads/xxx.png → /api/v1/uploads/xxx.png
+    const url = new URL(response.imageUrl)
+    captchaImage.value = '/api' + url.pathname
   } catch {
     captchaImage.value = ''
     ElMessage.warning('验证码加载失败，点击刷新重试')
@@ -137,7 +140,7 @@ async function sendResetCode() {
   }
   sendingCode.value = true
   try {
-    await request.post('/email', { to: resetForm.email })
+    await request.post('/auth/verification-code', { to: resetForm.email })
     ElMessage.success('验证码已发送')
   } catch (error: unknown) {
     const err = error as { message?: string }
@@ -152,7 +155,7 @@ async function handleLogin() {
   loading.value = true
 
   try {
-    const loginResult = await request.post<string>('/login', {
+    const loginResult = await request.post<string>('/auth/login', {
       email: loginForm.email,
       password: loginForm.password,
     })
@@ -164,7 +167,7 @@ async function handleLogin() {
     router.push(resolveHomeByRole(userStore.userInfo?.role))
   } catch (error: unknown) {
     const err = error as { message?: string }
-    ElMessage.error(err.message || '登录失败，请检查账号、密码或身份接口')
+    ElMessage.error(err.message || '登录失败，请检查账号和密码')
   } finally {
     loading.value = false
   }
@@ -179,7 +182,7 @@ async function handleReset() {
 
   loading.value = true
   try {
-    await request.post('/login/reset', {
+    await request.post('/auth/reset', {
       email: resetForm.email,
       code: resetForm.code,
       password: resetForm.password,

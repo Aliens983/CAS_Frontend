@@ -56,7 +56,7 @@ function mapService(item: ApiService, index: number): ServiceCard {
     location: '校园统一预约中心',
     priceLabel: item.serviceState === 1 ? '当前可申请' : '暂不可申请',
     status: item.serviceState === 1 ? 'available' : 'maintenance',
-    tags: ['后端接口', type === 'room' ? '场地预约' : type === 'equipment' ? '设备借用' : type === 'consultation' ? '咨询排班' : '综合办理'],
+    tags: [type === 'room' ? '场地预约' : type === 'equipment' ? '设备借用' : type === 'consultation' ? '咨询排班' : '综合办理', '校园服务'],
     image: gradients[index % gradients.length],
   }
 }
@@ -89,7 +89,7 @@ function mapBooking(item: ApiBooking, index: number): BookingRecord {
 }
 
 export async function loadUserProfile() {
-  const data = (await request.get('/user')) as ApiUser
+  const data = (await request.get('/users/me')) as ApiUser
   return normalizeUserInfo({
     ...data,
     username: data?.name,
@@ -99,16 +99,19 @@ export async function loadUserProfile() {
 }
 
 export async function loadServiceCards() {
-  const data = (await request.get('/service')) as ApiService[]
-  if (!Array.isArray(data)) {
+  const data = (await request.get('/app/services')) as { records?: ApiService[] } | ApiService[]
+  // 后端返回 PageResult 分页结构，数据在 records 字段中
+  const list = Array.isArray(data) ? data : data?.records
+  if (!Array.isArray(list)) {
     throw new Error('获取服务列表失败')
   }
-  return data.map(mapService)
+  return list.map(mapService)
 }
 
 export async function loadBookingRecords() {
-  const response = (await request.get('/service-status/user')) as { serviceStatusList?: ApiBooking[] }
-  const list = response?.serviceStatusList
+  const response = (await request.get('/users/me/bookings')) as { bookings?: ApiBooking[]; serviceStatusList?: ApiBooking[] }
+  // 后端 UserInfoAndServicesViaMPRespVO 的字段名是 bookings
+  const list = response?.bookings || response?.serviceStatusList
   if (!Array.isArray(list)) {
     throw new Error('获取预约记录失败')
   }
@@ -116,11 +119,13 @@ export async function loadBookingRecords() {
 }
 
 export async function loadAdminUsers() {
-  const users = (await request.get('/user/all_users')) as ApiUser[]
-  if (!Array.isArray(users)) {
+  const data = (await request.get('/users/list')) as { records?: ApiUser[] } | ApiUser[]
+  // 后端返回 PageResult 分页结构，数据在 records 字段中
+  const list = Array.isArray(data) ? data : data?.records
+  if (!Array.isArray(list)) {
     throw new Error('获取用户列表失败')
   }
-  return users
+  return list
 }
 
 export async function loadAdminSummary(): Promise<AdminSummary> {

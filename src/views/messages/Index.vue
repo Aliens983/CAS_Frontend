@@ -1,29 +1,16 @@
 <template>
   <div class="page-shell">
     <section class="page-hero">
-      <div>
-        <div class="status-pill is-brand">消息中心</div>
-        <h1 class="page-hero__title">审批通知、系统公告与业务提醒统一回流</h1>
-        <p class="page-hero__desc">页面已经按企业产品的信息流方式重组，后续你只需要接入站内信、公告和业务通知接口即可。</p>
+      <div class="page-hero__main">
+        <span class="page-hero__chip">消息中心</span>
+        <h1 class="page-hero__title">审批通知、系统公告与业务提醒</h1>
       </div>
-    </section>
-
-    <section class="message-overview">
-      <article class="overview-card" @click="openOverview('all')">
-        <span>全部消息</span>
-        <strong>{{ messages.length }}</strong>
-        <small>统一汇总到一个收件箱</small>
-      </article>
-      <article class="overview-card" @click="openOverview('unread')">
-        <span>未读提醒</span>
-        <strong>{{ unreadCount }}</strong>
-        <small>建议优先处理审批结果和时效类消息</small>
-      </article>
-      <article class="overview-card" @click="openOverview('types')">
-        <span>消息类型</span>
-        <strong>{{ messageTypes }}</strong>
-        <small>公告、审核、提醒统一展示</small>
-      </article>
+      <div class="page-hero__panel">
+        <div class="hero-panel__label">消息概览</div>
+        <div class="hero-panel__item"><strong>{{ messages.length }}</strong><span>全部消息</span></div>
+        <div class="hero-panel__item"><strong>{{ unreadCount }}</strong><span>未读提醒</span></div>
+        <div class="hero-panel__item"><strong>{{ messageTypes }}</strong><span>消息类型</span></div>
+      </div>
     </section>
 
     <el-card class="panel-card">
@@ -57,12 +44,6 @@
       </div>
     </el-card>
 
-    <el-dialog v-model="overviewVisible" :title="overviewTitle" width="560px">
-      <div class="dialog-list">
-        <div v-for="item in overviewItems" :key="item" class="dialog-card">{{ item }}</div>
-      </div>
-    </el-dialog>
-
     <el-drawer v-model="messageDrawerVisible" title="消息详情" size="420px">
       <template v-if="selectedMessage">
         <div class="drawer-stack">
@@ -90,9 +71,6 @@ import type { MessageItem } from '@/types'
 
 const router = useRouter()
 const filter = ref<'all' | 'approval' | 'system' | 'notice'>('all')
-const overviewVisible = ref(false)
-const overviewTitle = ref('')
-const overviewItems = ref<string[]>([])
 const selectedMessage = ref<MessageItem | null>(null)
 const messages = ref<MessageItem[]>([])
 const filters = [
@@ -116,17 +94,6 @@ function typeLabel(type: MessageItem['type']) {
   return { approval: '审核', system: '系统', notice: '公告' }[type]
 }
 
-function openOverview(mode: 'all' | 'unread' | 'types') {
-  const mapping = {
-    all: { title: '全部消息', items: ['审批通知 1 条', '系统升级通知 1 条', '规则公告 1 条'] },
-    unread: { title: '未读提醒', items: ['设备借用待审核提醒', '系统升级维护通知'] },
-    types: { title: '消息类型', items: ['审核类消息 1 种', '系统类消息 1 种', '公告类消息 1 种'] },
-  }
-  overviewTitle.value = mapping[mode].title
-  overviewItems.value = mapping[mode].items
-  overviewVisible.value = true
-}
-
 function handleMessageAction(type: MessageItem['type']) {
   const pathMap = { approval: '/bookings', system: '/profile', notice: '/services' }
   router.push(pathMap[type])
@@ -134,12 +101,11 @@ function handleMessageAction(type: MessageItem['type']) {
 </script>
 
 <style scoped lang="scss">
-.message-overview { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
-.overview-card { position: relative; display: grid; gap: 8px; padding: 22px; border-radius: 22px; background: rgba(255,255,255,.92); border: 1px solid var(--border-soft); box-shadow: var(--shadow-card); overflow: hidden; cursor: pointer; transition: transform .26s ease, box-shadow .26s ease; }
-.overview-card::after { content: ''; position: absolute; inset: auto -24px -24px auto; width: 92px; height: 92px; border-radius: 50%; background: radial-gradient(circle, rgba(20,88,212,.08), rgba(20,88,212,0)); pointer-events: none; }
-.overview-card:hover { transform: translateY(-6px); box-shadow: var(--shadow-card-hover); }
-.overview-card span, .overview-card small { color: var(--text-secondary); }
-.overview-card strong { font-size: 34px; }
+.hero-panel__label { font-size: 13px; color: rgba(255,255,255,0.64); margin-bottom: 2px; }
+.hero-panel__item { display: flex; justify-content: space-between; align-items: center; padding: 10px 0; border-bottom: 1px solid rgba(255,255,255,0.1); }
+.hero-panel__item:last-child { border-bottom: none; }
+.hero-panel__item strong { font-size: 20px; font-weight: 700; }
+.hero-panel__item span { font-size: 13px; color: rgba(255,255,255,0.7); }
 .message-list { display: grid; gap: 16px; }
 .message-item { position: relative; display: flex; justify-content: space-between; gap: 20px; padding: 20px; border-radius: 20px; border: 1px solid var(--border-soft); background: linear-gradient(180deg, #fff, #f8fbff); overflow: hidden; cursor: pointer; transition: transform .24s ease, box-shadow .24s ease, border-color .24s ease; }
 .message-item:hover { transform: translateY(-4px); box-shadow: 0 18px 28px rgba(20,33,61,.1); border-color: rgba(20,88,212,.14); }
@@ -155,5 +121,5 @@ function handleMessageAction(type: MessageItem['type']) {
 .dialog-card, .detail-card { padding: 16px; border-radius: 18px; background: linear-gradient(180deg, #fff, #f8fbff); border: 1px solid var(--border-soft); }
 .detail-card p { margin: 0; line-height: 1.8; color: var(--text-secondary); }
 .button-row { display: flex; gap: 10px; }
-@media (max-width: 900px) { .message-overview { grid-template-columns: 1fr; } .message-item, .button-row { flex-direction: column; } .message-item__side { justify-items: start; } }
+@media (max-width: 900px) { .message-item, .button-row { flex-direction: column; } .message-item__side { justify-items: start; } }
 </style>

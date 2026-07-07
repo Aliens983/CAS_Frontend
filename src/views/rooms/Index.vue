@@ -1,10 +1,10 @@
 <template>
   <div class="page-shell">
-    <section class="page-hero">
-      <div>
-        <div class="status-pill is-brand">会议室预约</div>
-        <h1 class="page-hero__title">按空间资源标准化承接核心预约场景</h1>
-        <p class="page-hero__desc">支持按容量、状态和设施筛选，快速找到可用会议室并提交预约。</p>
+    <section class="page-hero page-hero--single">
+      <div class="page-hero__main">
+        <span class="page-hero__chip">空间预约</span>
+        <h1 class="page-hero__title">会议室与场地资源预约</h1>
+        <p class="page-hero__desc">浏览校内可用会议室与活动场地，按容量和设施筛选，在线提交预约申请。</p>
       </div>
       <div class="hero-actions">
         <el-input v-model="keyword" placeholder="搜索会议室、楼宇或设施" clearable />
@@ -20,7 +20,7 @@
       <div class="room-highlight__panel">
         <span>空间视图</span>
         <strong>支持从容量、楼宇和设施维度快速筛选</strong>
-        <p>适合做后续日历排期、冲突检测和楼层平面图入口。</p>
+        <p>支持按日期和容量筛选，查看各会议室设施详情与可用时段。</p>
       </div>
       <div class="room-highlight__metrics">
         <div @click="showAvailableRooms">
@@ -111,6 +111,7 @@
 <script setup lang="ts">
 import { computed, onMounted, reactive, ref } from 'vue'
 import { ElMessage } from 'element-plus'
+import request from '@/utils/request'
 import { roomAPI } from '@/services/api'
 import type { BookingDraft, RoomResource } from '@/types'
 
@@ -123,6 +124,7 @@ const resourceVisible = ref(false)
 const resourceDialogTitle = ref('')
 const resourceDialogItems = ref<{ title: string; desc: string }[]>([])
 const selectedRoom = ref<RoomResource | null>(null)
+const submitting = ref(false)
 const roomDrawerVisible = computed({
   get: () => Boolean(selectedRoom.value),
   set: (value: boolean) => {
@@ -146,6 +148,8 @@ onMounted(async () => {
     const data = await roomAPI.getRooms({}) as any
     if (Array.isArray(data)) {
       rooms.value = data
+    } else if (data?.records && Array.isArray(data.records)) {
+      rooms.value = data.records
     } else if (data?.data && Array.isArray(data.data)) {
       rooms.value = data.data
     }
@@ -184,16 +188,36 @@ function showBuildings() {
   resourceVisible.value = true
 }
 
-function openBooking(room: RoomResource) {
+async function openBooking(room: RoomResource) {
   draft.targetId = room.id
   draft.targetName = room.name
   draft.purpose = ''
   visible.value = true
 }
 
-function submit() {
-  visible.value = false
-  ElMessage.success('会议室预约已提交成功。')
+async function submit() {
+  if (!draft.date || !draft.startTime || !draft.endTime) {
+    ElMessage.warning('请填写完整的预约时间')
+    return
+  }
+  submitting.value = true
+  try {
+    await request.post('/app/bookings/room', {
+      roomId: String(draft.targetId),
+      date: draft.date,
+      startTime: draft.startTime,
+      endTime: draft.endTime,
+      purpose: draft.purpose || '会议室预约',
+      remarks: draft.notes || '',
+    })
+    visible.value = false
+    ElMessage.success('会议室预约已提交成功')
+  } catch (error: unknown) {
+    const err = error as { message?: string }
+    ElMessage.error(err.message || '预约提交失败，请重试')
+  } finally {
+    submitting.value = false
+  }
 }
 </script>
 

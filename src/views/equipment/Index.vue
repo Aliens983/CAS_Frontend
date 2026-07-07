@@ -78,11 +78,13 @@
 <script setup lang="ts">
 import { computed, ref, onMounted } from 'vue'
 import { ElMessage } from 'element-plus'
+import request from '@/utils/request'
 import { equipmentAPI } from '@/services/api'
 import type { EquipmentResource } from '@/types'
 
 const equipments = ref<EquipmentResource[]>([])
 const loading = ref(true)
+const borrowing = ref(false)
 const borrowableVisible = ref(false)
 const selectedEquipment = ref<EquipmentResource | null>(null)
 const equipmentDrawerVisible = computed({
@@ -97,6 +99,8 @@ onMounted(async () => {
     const data = await equipmentAPI.getEquipment({}) as any
     if (Array.isArray(data)) {
       equipments.value = data
+    } else if (data?.records && Array.isArray(data.records)) {
+      equipments.value = data.records
     } else if (data?.data && Array.isArray(data.data)) {
       equipments.value = data.data
     }
@@ -114,13 +118,30 @@ function showBorrowable() {
   borrowableVisible.value = true
 }
 
-function borrow(item: EquipmentResource) {
+async function borrow(item: EquipmentResource) {
   if (item.availableStock <= 0) {
     ElMessage.warning('当前设备库存不足')
     return
   }
   selectedEquipment.value = item
-  ElMessage.success(`已选择“${item.name}”，请填写借用信息。`)
+  borrowing.value = true
+  try {
+    await request.post('/app/bookings/equipment', {
+      equipmentId: String(item.id),
+      date: new Date().toISOString().slice(0, 10),
+      startTime: '09:00',
+      endTime: '17:00',
+      purpose: `设备借用 - ${item.name}`,
+      remarks: '',
+    })
+    selectedEquipment.value = null
+    ElMessage.success(`已成功借用 ${item.name}`)
+  } catch (error: unknown) {
+    const err = error as { message?: string }
+    ElMessage.error(err.message || '借用申请提交失败')
+  } finally {
+    borrowing.value = false
+  }
 }
 </script>
 

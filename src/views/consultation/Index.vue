@@ -1,10 +1,10 @@
 <template>
   <div class="page-shell">
-    <section class="page-hero">
-      <div>
-        <div class="status-pill is-brand">咨询服务</div>
-        <h1 class="page-hero__title">学生服务与顾问预约的标准化入口</h1>
-        <p class="page-hero__desc">保留 CAS 原有业务方向，但页面表达升级为企业产品化样式，便于后续继续接排班、空档和预约提交接口。</p>
+    <section class="page-hero page-hero--single">
+      <div class="page-hero__main">
+        <span class="page-hero__chip">咨询预约</span>
+        <h1 class="page-hero__title">学业咨询与就业指导</h1>
+        <p class="page-hero__desc">为您提供专业的学业规划、就业指导和心理辅导服务，选择顾问即可在线预约。</p>
       </div>
     </section>
 
@@ -81,11 +81,13 @@
 <script setup lang="ts">
 import { computed, onMounted, ref } from 'vue'
 import { ElMessage } from 'element-plus'
+import request from '@/utils/request'
 import { consultationAPI } from '@/services/api'
 import type { Consultant } from '@/types'
 
 const consultants = ref<Consultant[]>([])
 const loading = ref(true)
+const reserving = ref(false)
 const availableVisible = ref(false)
 const selectedConsultant = ref<Consultant | null>(null)
 const consultantDrawerVisible = computed({
@@ -100,6 +102,8 @@ onMounted(async () => {
     const data = await consultationAPI.getConsultants({}) as any
     if (Array.isArray(data)) {
       consultants.value = data
+    } else if (data?.records && Array.isArray(data.records)) {
+      consultants.value = data.records
     } else if (data?.data && Array.isArray(data.data)) {
       consultants.value = data.data
     }
@@ -116,9 +120,26 @@ function showAvailableConsultants() {
   availableVisible.value = true
 }
 
-function reserve(consultant: Consultant) {
+async function reserve(consultant: Consultant) {
   selectedConsultant.value = consultant
-  ElMessage.success(`已打开“${consultant.name}”的预约窗口。`)
+  reserving.value = true
+  try {
+    await request.post('/app/bookings/consultation', {
+      consultantId: String(consultant.id),
+      date: new Date().toISOString().slice(0, 10),
+      startTime: '09:00',
+      endTime: '10:00',
+      subject: `咨询预约 - ${consultant.name}`,
+      description: `${consultant.department} ${consultant.title}`,
+    })
+    selectedConsultant.value = null
+    ElMessage.success(`已成功预约 ${consultant.name}`)
+  } catch (error: unknown) {
+    const err = error as { message?: string }
+    ElMessage.error(err.message || '预约提交失败')
+  } finally {
+    reserving.value = false
+  }
 }
 </script>
 

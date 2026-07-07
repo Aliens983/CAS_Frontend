@@ -1,39 +1,25 @@
 <template>
   <div class="page-shell">
-    <section class="page-hero">
-      <div>
-        <div class="status-pill is-brand">服务中心</div>
-        <h1 class="page-hero__title">按业务域组织的校园预约服务目录</h1>
-        <p class="page-hero__desc">
-          保留 CAS 的业务分类方式，同时以更接近企业门户的形式展示服务状态、适用范围和接入能力。
-        </p>
+    <section class="dashboard-hero">
+      <div class="dashboard-hero__main">
+        <span class="hero-chip">服务中心</span>
+        <h1>校园预约服务目录</h1>
+        <p>按业务域组织，展示服务状态、适用范围和接入能力，支持按名称和状态快速筛选。</p>
+        <div class="hero-actions">
+          <el-input v-model="keyword" placeholder="搜索服务、类型或标签" clearable />
+          <el-select v-model="status">
+            <el-option label="全部状态" value="" />
+            <el-option label="可预约" value="available" />
+            <el-option label="维护中" value="maintenance" />
+          </el-select>
+        </div>
       </div>
-      <div class="hero-actions">
-        <el-input v-model="keyword" placeholder="搜索服务、类型或标签" clearable />
-        <el-select v-model="status">
-          <el-option label="全部状态" value="" />
-          <el-option label="可预约" value="available" />
-          <el-option label="维护中" value="maintenance" />
-        </el-select>
+      <div class="dashboard-hero__panel">
+        <div class="hero-panel__label">服务概览</div>
+        <div class="hero-panel__item"><strong>{{ services.length }}</strong><span>目录规模</span></div>
+        <div class="hero-panel__item"><strong>{{ availableCount }}</strong><span>可用服务</span></div>
+        <div class="hero-panel__item"><strong>{{ maintenanceCount }}</strong><span>维护中</span></div>
       </div>
-    </section>
-
-    <section class="service-overview">
-      <article class="overview-card">
-        <span>目录规模</span>
-        <strong>{{ services.length }}</strong>
-        <small>已纳入统一预约门户</small>
-      </article>
-      <article class="overview-card">
-        <span>可用服务</span>
-        <strong>{{ availableCount }}</strong>
-        <small>支持直接发起申请</small>
-      </article>
-      <article class="overview-card">
-        <span>能力整合</span>
-        <strong>4</strong>
-        <small>会议室、设备、咨询、打印</small>
-      </article>
     </section>
 
     <section class="resource-grid">
@@ -87,6 +73,7 @@ const filteredServices = computed(() =>
 )
 
 const availableCount = computed(() => services.value.filter((item) => item.status === 'available').length)
+const maintenanceCount = computed(() => services.value.filter((item) => item.status !== 'available').length)
 
 onMounted(async () => {
   loading.value = true
@@ -112,92 +99,48 @@ function goService(id: number, type: string) {
 </script>
 
 <style scoped lang="scss">
-.hero-actions {
-  display: grid;
-  gap: 12px;
-  width: min(320px, 100%);
-}
-
-.service-overview {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 16px;
-}
-
-.overview-card {
+.dashboard-hero {
   position: relative;
   display: grid;
-  gap: 8px;
-  padding: 22px;
-  border-radius: 22px;
-  background: rgba(255, 255, 255, 0.92);
-  border: 1px solid var(--border-soft);
+  grid-template-columns: 1.2fr 0.8fr;
+  gap: 20px;
+  padding: 32px;
+  border-radius: 30px;
+  color: #fff;
+  background: linear-gradient(135deg, #0e2647, #1458d4 62%, #52a1ff);
   box-shadow: var(--shadow-card);
   overflow: hidden;
-  transition: transform 0.26s ease, box-shadow 0.26s ease;
 }
+.dashboard-hero::before {
+  content: ""; position: absolute; inset: 0;
+  background:
+    radial-gradient(circle at 20% 20%, rgba(255,255,255,0.16), transparent 22%),
+    linear-gradient(120deg, transparent 14%, rgba(255,255,255,0.08) 36%, transparent 62%);
+}
+.dashboard-hero::after {
+  content: ""; position: absolute;
+  inset: auto -60px -60px auto; width: 260px; height: 260px; border-radius: 50%;
+  background: radial-gradient(circle, rgba(255,255,255,0.18), rgba(255,255,255,0));
+  animation: dashHalo 8s ease-in-out infinite; pointer-events: none;
+}
+.dashboard-hero__main, .dashboard-hero__panel { position: relative; z-index: 1; }
+.hero-chip { display: inline-flex; padding: 5px 12px; border-radius: 999px; font-size: 12px; letter-spacing: 0.06em; background: rgba(255,255,255,0.14); margin-bottom: 14px; }
+.dashboard-hero h1 { margin: 12px 0 10px; font-size: 36px; line-height: 1.18; }
+.dashboard-hero p { max-width: 720px; margin: 0; line-height: 1.8; color: rgba(255,255,255,0.84); }
+.hero-actions { display: grid; gap: 12px; width: min(320px, 100%); margin-top: 22px; }
+.dashboard-hero__panel { display: grid; gap: 12px; padding: 22px; border-radius: 22px; background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.12); backdrop-filter: blur(10px); }
+.hero-panel__label { font-size: 13px; color: rgba(255,255,255,0.64); margin-bottom: 2px; }
+.hero-panel__item { display: flex; justify-content: space-between; align-items: center; padding: 10px 0; border-bottom: 1px solid rgba(255,255,255,0.1); }
+.hero-panel__item:last-child { border-bottom: none; }
+.hero-panel__item strong { font-size: 20px; font-weight: 700; }
+.hero-panel__item span { font-size: 13px; color: rgba(255,255,255,0.7); }
 
-.overview-card::after {
-  content: '';
-  position: absolute;
-  inset: auto -22px -22px auto;
-  width: 88px;
-  height: 88px;
-  border-radius: 50%;
-  background: radial-gradient(circle, rgba(20, 88, 212, 0.08), rgba(20, 88, 212, 0));
-}
+.resource-card__pulse { position: absolute; top: -24px; right: -24px; width: 88px; height: 88px; border-radius: 50%; background: radial-gradient(circle, rgba(20,88,212,0.12), rgba(20,88,212,0)); animation: servicePulse 5.8s ease-in-out infinite; }
+.tag-wrap { display: flex; flex-wrap: wrap; gap: 8px; }
+.button-row { display: flex; gap: 10px; }
 
-.overview-card:hover {
-  transform: translateY(-6px);
-  box-shadow: var(--shadow-card-hover);
-}
+@keyframes dashHalo { 0%,100% { transform: translate3d(0,0,0) scale(1); } 50% { transform: translate3d(-20px,-10px,0) scale(1.08); } }
+@keyframes servicePulse { 0%,100% { transform: scale(1); opacity: 0.7; } 50% { transform: scale(1.16); opacity: 1; } }
 
-.overview-card span,
-.overview-card small {
-  color: var(--text-secondary);
-}
-
-.overview-card strong {
-  font-size: 34px;
-}
-
-.resource-card__pulse {
-  position: absolute;
-  top: -24px;
-  right: -24px;
-  width: 88px;
-  height: 88px;
-  border-radius: 50%;
-  background: radial-gradient(circle, rgba(20, 88, 212, 0.12), rgba(20, 88, 212, 0));
-  animation: servicePulse 5.8s ease-in-out infinite;
-}
-
-.tag-wrap {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-}
-
-.button-row {
-  display: flex;
-  gap: 10px;
-}
-
-@keyframes servicePulse {
-  0%,
-  100% {
-    transform: scale(1);
-    opacity: 0.7;
-  }
-  50% {
-    transform: scale(1.16);
-    opacity: 1;
-  }
-}
-
-@media (max-width: 900px) {
-  .service-overview {
-    grid-template-columns: 1fr;
-  }
-}
+@media (max-width: 900px) { .dashboard-hero { grid-template-columns: 1fr; } }
 </style>

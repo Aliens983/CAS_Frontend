@@ -38,7 +38,7 @@
       </div>
     </header>
 
-    <section class="hero">
+    <section v-if="route.path === '/dashboard'" class="hero">
       <div>
         <span class="status-pill is-brand">用户端</span>
         <h1>常用预约与进度回看集中在同一入口</h1>

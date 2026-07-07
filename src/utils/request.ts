@@ -40,12 +40,15 @@ request.interceptors.response.use(
 
     return response.data
   }) as any,
-  ((error: AxiosError<ApiEnvelope<unknown>>) => {
-    if (error.response?.status === 401) {
-      const userStore = useUserStore()
-      userStore.logout()
+  ((error: AxiosError<ApiEnvelope<unknown>> | Error) => {
+    if (axios.isAxiosError(error)) {
+      // 只处理真正的HTTP错误，业务异常由组件自行处理
+      if (error.response?.status === 401) {
+        const userStore = useUserStore()
+        userStore.logout()
+      }
+      ElMessage.error(error.response?.data?.message || error.message || '请求失败')
     }
-    ElMessage.error(error.response?.data?.message || error.message || '请求失败')
     return Promise.reject(error)
   }) as any,
 )

@@ -159,7 +159,7 @@ const quickActions = [
 ]
 
 const riskList = computed(() => [
-  { title: '库存同步延迟', desc: '设备中心库存与前端展示存在轻微延迟，后续建议接入实时刷新。', level: '中', tone: 'tone-warning' },
+  { title: '库存同步延迟', desc: '设备中心库存更新存在轻微延迟，建议定期刷新页面获取最新数据。', level: '中', tone: 'tone-warning' },
   { title: '高峰审核堆积', desc: '午后审核量上升较快，当前管理员处理窗口存在瓶颈。', level: '高', tone: 'tone-danger' },
   { title: '规则配置分散', desc: '预约策略仍需要进一步收敛到统一系统设置模块。', level: '中', tone: 'tone-brand' },
 ])

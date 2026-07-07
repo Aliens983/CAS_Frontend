@@ -1,29 +1,16 @@
 <template>
   <div class="page-shell">
-    <section class="page-hero">
-      <div>
-        <div class="status-pill is-brand">个人中心</div>
-        <h1 class="page-hero__title">账号、角色和偏好配置统一管理</h1>
-        <p class="page-hero__desc">结构按企业产品个人中心重组，方便你后续继续接用户资料、通知偏好和安全设置接口。</p>
+    <section class="dashboard-hero">
+      <div class="dashboard-hero__main">
+        <span class="hero-chip">个人中心</span>
+        <h1>账号信息与偏好设置</h1>
       </div>
-    </section>
-
-    <section class="profile-overview">
-      <article class="overview-card" @click="router.push('/bookings')">
-        <span>我的预约</span>
-        <strong>3</strong>
-        <small>快速查看进行中和历史记录</small>
-      </article>
-      <article class="overview-card" @click="router.push('/messages')">
-        <span>消息提醒</span>
-        <strong>2</strong>
-        <small>未读通知与审批提醒</small>
-      </article>
-      <article class="overview-card" @click="quickVisible = true">
-        <span>快捷操作</span>
-        <strong>4</strong>
-        <small>常用入口集中放在个人中心</small>
-      </article>
+      <div class="dashboard-hero__panel">
+        <div class="hero-panel__label">快捷入口</div>
+        <div class="hero-panel__item" @click="router.push('/bookings')"><strong>我的预约</strong><span>查看记录 →</span></div>
+        <div class="hero-panel__item" @click="router.push('/messages')"><strong>消息提醒</strong><span>未读通知 →</span></div>
+        <div class="hero-panel__item" @click="quickVisible = true"><strong>快捷操作</strong><span>常用入口 →</span></div>
+      </div>
     </section>
 
     <section class="grid-cards">
@@ -104,12 +91,32 @@ function handleLogout() {
 </script>
 
 <style scoped lang="scss">
-.profile-overview { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
-.overview-card { position: relative; display: grid; gap: 8px; padding: 22px; border-radius: 22px; background: rgba(255,255,255,.92); border: 1px solid var(--border-soft); box-shadow: var(--shadow-card); overflow: hidden; cursor: pointer; transition: transform .26s ease, box-shadow .26s ease; }
-.overview-card::after { content: ''; position: absolute; inset: auto -24px -24px auto; width: 92px; height: 92px; border-radius: 50%; background: radial-gradient(circle, rgba(20,88,212,.08), rgba(20,88,212,0)); pointer-events: none; }
-.overview-card:hover { transform: translateY(-6px); box-shadow: var(--shadow-card-hover); }
-.overview-card span, .overview-card small { color: var(--text-secondary); }
-.overview-card strong { font-size: 34px; }
+.dashboard-hero {
+  position: relative; display: grid; grid-template-columns: 1.2fr 0.8fr; gap: 20px;
+  padding: 32px; border-radius: 30px; color: #fff;
+  background: linear-gradient(135deg, #0e2647, #1458d4 62%, #52a1ff);
+  box-shadow: var(--shadow-card); overflow: hidden;
+}
+.dashboard-hero::before {
+  content: ""; position: absolute; inset: 0;
+  background: radial-gradient(circle at 20% 20%, rgba(255,255,255,0.16), transparent 22%),
+              linear-gradient(120deg, transparent 14%, rgba(255,255,255,0.08) 36%, transparent 62%);
+}
+.dashboard-hero::after {
+  content: ""; position: absolute; inset: auto -60px -60px auto;
+  width: 260px; height: 260px; border-radius: 50%;
+  background: radial-gradient(circle, rgba(255,255,255,0.18), rgba(255,255,255,0));
+  animation: dashHalo 8s ease-in-out infinite; pointer-events: none;
+}
+.dashboard-hero__main, .dashboard-hero__panel { position: relative; z-index: 1; }
+.hero-chip { display: inline-flex; padding: 5px 12px; border-radius: 999px; font-size: 12px; letter-spacing: 0.06em; background: rgba(255,255,255,0.14); margin-bottom: 14px; }
+.dashboard-hero__main h1 { margin: 12px 0 0; font-size: 36px; line-height: 1.18; }
+.dashboard-hero__panel { display: grid; gap: 12px; padding: 22px; border-radius: 22px; background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.12); backdrop-filter: blur(10px); }
+.hero-panel__label { font-size: 13px; color: rgba(255,255,255,0.64); margin-bottom: 2px; }
+.hero-panel__item { display: flex; justify-content: space-between; align-items: center; padding: 10px 0; border-bottom: 1px solid rgba(255,255,255,0.1); cursor: pointer; }
+.hero-panel__item:last-child { border-bottom: none; }
+.hero-panel__item strong { font-size: 14px; font-weight: 600; }
+.hero-panel__item span { font-size: 12px; color: rgba(255,255,255,0.6); }
 .span-4 { grid-column: span 4; }
 .span-8 { grid-column: span 8; }
 .profile-summary { position: relative; display: grid; justify-items: center; gap: 12px; padding: 12px 0; text-align: center; overflow: hidden; }
@@ -122,6 +129,8 @@ function handleLogout() {
 .preference-card p { margin: 4px 0 0; color: var(--text-secondary); font-size: 13px; }
 .dialog-card { padding: 16px; border-radius: 18px; background: linear-gradient(180deg, #fff, #f8fbff); border: 1px solid var(--border-soft); }
 @keyframes haloFloat { 0%,100% { transform: translate3d(0,0,0) scale(1);} 50% { transform: translate3d(0,10px,0) scale(1.08);} }
-@media (max-width: 1200px) { .profile-overview { grid-template-columns: 1fr; } .span-4, .span-8 { grid-column: span 12; } }
+@keyframes dashHalo { 0%,100% { transform: translate3d(0,0,0) scale(1); } 50% { transform: translate3d(-20px,-10px,0) scale(1.08); } }
+@media (max-width: 900px) { .dashboard-hero { grid-template-columns: 1fr; } }
+@media (max-width: 1200px) { .span-4, .span-8 { grid-column: span 12; } }
 @media (max-width: 760px) { .preference-card { flex-direction: column; align-items: flex-start; } }
 </style>

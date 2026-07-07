@@ -33,7 +33,7 @@ request.interceptors.response.use(
 
     if (data.code !== undefined && data.code !== 200) {
       const msg = data.msg || data.message || '请求失败'
-      ElMessage.error(msg)
+      // 不在此处弹错误，由组件自行处理，避免重复提示
       return Promise.reject(new Error(msg))
     }
 
@@ -41,7 +41,7 @@ request.interceptors.response.use(
   },
   (error) => {
     const status = error.response?.status
-    const msg = error.response?.data?.msg || error.response?.data?.message || error.message
+    const serverMsg = error.response?.data?.msg || error.response?.data?.message
 
     if (status === 401) {
       ElMessage.error('登录已过期，请重新登录')
@@ -49,13 +49,16 @@ request.interceptors.response.use(
       userStore.logout()
       window.location.href = '/login'
     } else if (status === 403) {
-      ElMessage.error('没有权限访问该资源')
+      ElMessage.error(serverMsg || '没有权限访问该资源')
     } else if (status === 404) {
-      ElMessage.error('请求的资源不存在')
+      ElMessage.error(serverMsg || '请求的资源不存在')
     } else if (status === 500) {
-      ElMessage.error('服务器内部错误')
+      ElMessage.error(serverMsg || '服务器内部错误')
+    } else if (status) {
+      ElMessage.error(serverMsg || '网络请求失败')
     } else {
-      ElMessage.error(msg || '网络请求失败')
+      // 无 status 的错误（网络中断等），返回通用消息
+      return Promise.reject(error)
     }
 
     return Promise.reject(error)

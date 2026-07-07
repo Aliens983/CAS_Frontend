@@ -20,7 +20,7 @@
       <section class="auth-card">
         <div class="auth-card__head">
           <h2>登录</h2>
-          <p>支持真实接口登录，也保留开发环境兜底体验。</p>
+          <p>安全可靠的校园统一身份认证入口，登录后按角色自动分流至对应工作台。</p>
         </div>
 
         <el-form ref="formRef" :model="form" :rules="rules" size="large">
@@ -88,8 +88,11 @@ const rules: FormRules = {
 // 刷新验证码
 async function refreshCaptcha() {
   try {
-    const response = await userAPI.getGraphicCaptcha() as unknown as { uuid: string; image: string }
-    captchaImage.value = response.image
+    const response = await userAPI.getGraphicCaptcha() as unknown as { uuid: string; imageUrl: string }
+    // 后端返回的是绝对URL如 http://localhost:18080/uploads/xxx.png
+    // 需转换为走Vite代理的路径 /api/uploads/xxx.png → /api/v1/uploads/xxx.png
+    const url = new URL(response.imageUrl)
+    captchaImage.value = '/api' + url.pathname
   } catch (error) {
     console.error('获取验证码失败:', error)
     ElMessage.error('获取验证码失败，请重试')
@@ -113,7 +116,7 @@ async function submit() {
     router.push(resolveHomeByRole(normalized.role))
   } catch (error: unknown) {
     const err = error as { message?: string }
-    ElMessage.error(err.message || '登录失败，请检查账号、密码或身份接口')
+    ElMessage.error(err.message || '登录失败，请检查账号和密码')
   } finally {
     loading.value = false
   }

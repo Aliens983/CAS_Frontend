@@ -82,6 +82,7 @@ export interface BookingRecord {
   status: BookingStatus
   createdAt: string
   remarks?: string
+  orderId?: number
 }
 
 export interface MessageItem {

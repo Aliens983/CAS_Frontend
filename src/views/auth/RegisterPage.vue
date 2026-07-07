@@ -2,9 +2,9 @@
   <div class="auth-page">
     <div class="register-card">
       <div class="auth-head">
-        <span class="status-pill is-success">已接通邮件验证码接口</span>
+        <span class="status-pill is-success">安全注册</span>
         <h1>创建校园预约账号</h1>
-        <p>后端当前支持邮箱验证码注册。前端保留了简化版表单，只联调已存在接口。</p>
+        <p>加入校园预约平台，使用邮箱验证码完成安全注册，即刻享受便捷的预约服务。</p>
       </div>
 
       <el-form ref="formRef" :model="form" :rules="rules" label-position="top">
@@ -83,7 +83,7 @@ async function sendCode() {
   }
   sending.value = true
   try {
-    await request.post('/email', { to: form.email })
+    await request.post('/auth/verification-code', { to: form.email })
     ElMessage.success('验证码已发送')
   } catch (error: unknown) {
     const err = error as { message?: string }
@@ -95,8 +95,11 @@ async function sendCode() {
 
 async function refreshCaptcha() {
   try {
-    const response = await request.get('/graphic/get') as unknown as { uuid: string; image: string }
-    captchaImage.value = response.image
+    const response = await request.get('/captcha') as unknown as { uuid: string; imageUrl: string }
+    // 后端返回的是绝对URL如 http://localhost:18080/uploads/xxx.png
+    // 需转换为走Vite代理的路径 /api/uploads/xxx.png → /api/v1/uploads/xxx.png
+    const url = new URL(response.imageUrl)
+    captchaImage.value = '/api' + url.pathname
   } catch {
     captchaImage.value = ''
     ElMessage.warning('验证码加载失败，点击刷新重试')
@@ -112,7 +115,7 @@ async function submit() {
 
   loading.value = true
   try {
-    await request.post('/register/verify-code', {
+    await request.post('/auth/register', {
       name: form.name,
       grade: form.grade,
       email: form.email,

@@ -28,12 +28,14 @@
 import { ref, onMounted } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { ElMessage } from 'element-plus'
+import request from '@/common/utils/request'
 import { fetchServiceCards } from '@/common/campus'
 import type { ServiceCard } from '@/common/types'
 
 const router = useRouter()
 const route = useRoute()
 const service = ref<ServiceCard | null>(null)
+const booking = ref(false)
 
 onMounted(async () => {
   const id = Number(route.params.id)
@@ -47,9 +49,20 @@ onMounted(async () => {
   }
 })
 
-function handleBook() {
+async function handleBook() {
   if (!service.value) return
-  ElMessage.info('预约功能开发中...')
+  booking.value = true
+  try {
+    await request.post('/app/bookings', {
+      serviceIds: [service.value.id],
+    })
+    ElMessage.success('预约已提交成功')
+  } catch (error: unknown) {
+    const err = error as { message?: string }
+    ElMessage.error(err.message || '预约提交失败')
+  } finally {
+    booking.value = false
+  }
 }
 </script>
 
