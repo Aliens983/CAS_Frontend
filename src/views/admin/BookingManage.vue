@@ -1,29 +1,15 @@
 <template>
   <div class="page-shell">
-    <section class="page-hero page-hero--single">
-      <div class="page-hero__main">
-        <span class="page-hero__chip">预约审核</span>
-        <h1 class="page-hero__title">预约申请审批管理</h1>
-        <p class="page-hero__desc">集中处理待审核的预约申请，支持逐条审批、状态筛选与审核意见反馈。</p>
+    <section class="admin-hero">
+      <div class="admin-hero__main">
+        <span class="hero-chip">预约审核</span>
+        <h1>预约申请审批管理</h1>
+        <p>集中处理待审核的预约申请，支持逐条审批、状态筛选与审核意见反馈。</p>
       </div>
-    </section>
-
-    <section class="admin-overview">
-      <article class="overview-card" @click="openOverview('all')">
-        <span>全部申请</span>
-        <strong>{{ bookings.length }}</strong>
-        <small>统一接入各类预约业务</small>
-      </article>
-      <article class="overview-card" @click="openOverview('pending')">
-        <span>待审核</span>
-        <strong>{{ pendingCount }}</strong>
-        <small>建议优先处理临近时段申请</small>
-      </article>
-      <article class="overview-card" @click="openOverview('approved')">
-        <span>已通过</span>
-        <strong>{{ approvedCount }}</strong>
-        <small>可继续扩展通知与落地回执</small>
-      </article>
+      <div class="admin-hero__signal">
+        <div class="signal-card"><span>全部申请</span><strong>{{ bookings.length }}</strong><small>统一接入各类预约业务</small></div>
+        <div class="signal-card"><span>待审核</span><strong>{{ pendingCount }}</strong><small>建议优先处理</small></div>
+      </div>
     </section>
 
     <el-card class="panel-card">
@@ -188,7 +174,6 @@ const filteredBookings = computed(() =>
   filter.value === 'all' ? bookings.value : bookings.value.filter((item) => item.status === filter.value)
 )
 const pendingCount = computed(() => bookings.value.filter((item) => item.status === 'pending').length)
-const approvedCount = computed(() => bookings.value.filter((item) => item.status === 'approved').length)
 const bookingDrawerVisible = ref(false)
 
 function openBookingDrawer(item: BookingItem) {
@@ -211,17 +196,6 @@ function closeAuditDialog() {
 onMounted(() => {
   void loadBookings()
 })
-
-function openOverview(mode: 'all' | 'pending' | 'approved') {
-  const mapping = {
-    all: { title: '全部申请', items: bookings.value.map((item) => `${item.bookingNo} / ${item.serviceName}`) },
-    pending: { title: '待审核申请', items: bookings.value.filter((item) => item.status === 'pending').map((item) => `${item.bookingNo} / ${item.applicant}`) },
-    approved: { title: '已通过申请', items: bookings.value.filter((item) => item.status === 'approved').map((item) => `${item.bookingNo} / ${item.serviceName}`) },
-  }
-  overviewTitle.value = mapping[mode].title
-  overviewItems.value = mapping[mode].items
-  overviewVisible.value = true
-}
 
 function handleAudit(action: '通过' | '驳回', item?: BookingItem) {
   const target = item || selectedBooking.value
@@ -287,12 +261,34 @@ function statusText(status: BookingStatus) {
 </script>
 
 <style scoped lang="scss">
-.admin-overview { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
-.overview-card { position: relative; display: grid; gap: 8px; padding: 22px; border-radius: 22px; background: rgba(255,255,255,.92); border: 1px solid var(--border-soft); box-shadow: var(--shadow-card); overflow: hidden; cursor: pointer; transition: transform .26s ease, box-shadow .26s ease; }
-.overview-card::after { content: ''; position: absolute; inset: auto -24px -24px auto; width: 92px; height: 92px; border-radius: 50%; background: radial-gradient(circle, rgba(20,88,212,.08), rgba(20,88,212,0)); pointer-events: none; }
-.overview-card:hover { transform: translateY(-6px); box-shadow: var(--shadow-card-hover); }
-.overview-card span, .overview-card small { color: var(--text-secondary); }
-.overview-card strong { font-size: 34px; }
+.admin-hero {
+  position: relative; display: grid; grid-template-columns: 1.2fr 0.8fr; gap: 20px;
+  padding: 32px; border-radius: 30px; color: #fff;
+  background: linear-gradient(135deg, #0f172a, #132949 55%, #1458d4);
+  box-shadow: var(--shadow-card); overflow: hidden;
+}
+.admin-hero::before {
+  content:""; position:absolute; inset:0;
+  background: radial-gradient(circle at 18% 20%, rgba(255,255,255,.12), transparent 18%),
+              linear-gradient(140deg, transparent 14%, rgba(255,255,255,.08) 42%, transparent 72%);
+}
+.admin-hero::after {
+  content:""; position:absolute; inset:-30% -6% auto auto; width:280px; height:280px; border-radius:50%;
+  background: radial-gradient(circle, rgba(59,130,246,.24), rgba(59,130,246,0));
+  animation: adminGlow 8s ease-in-out infinite; pointer-events:none;
+}
+.admin-hero__main, .admin-hero__signal { position:relative; z-index:1; }
+.hero-chip { display:inline-flex; padding:6px 12px; border-radius:999px; font-size:12px; letter-spacing:.08em; background:rgba(255,255,255,.12); margin-bottom:14px; }
+.admin-hero h1 { margin:12px 0 10px; font-size:36px; line-height:1.18; }
+.admin-hero p { max-width:740px; margin:0; line-height:1.8; color:rgba(255,255,255,.82); }
+.admin-hero__signal { display:grid; gap:12px; }
+.signal-card { display:grid; gap:4px; padding:16px 18px; border-radius:16px; background:rgba(255,255,255,.08); border:1px solid rgba(255,255,255,.1); cursor:pointer; transition:background .2s; }
+.signal-card:hover { background:rgba(255,255,255,.14); }
+.signal-card span { font-size:13px; color:rgba(255,255,255,.64); }
+.signal-card strong { font-size:26px; font-weight:700; }
+.signal-card small { font-size:12px; color:rgba(255,255,255,.5); }
+
+@keyframes adminGlow { 0%,100%{ transform:translate3d(0,0,0) scale(1); } 50%{ transform:translate3d(-16px,-8px,0) scale(1.06); } }
 .booking-stack, .dialog-list, .drawer-stack { display: grid; gap: 14px; }
 .booking-item { display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 18px 20px; border-radius: 20px; border: 1px solid var(--border-soft); background: linear-gradient(180deg, #fff, #f8fbff); cursor: pointer; transition: transform .24s ease, box-shadow .24s ease, border-color .24s ease; }
 .booking-item:hover { transform: translateY(-4px); box-shadow: 0 18px 28px rgba(20,33,61,.1); border-color: rgba(20,88,212,.14); }
@@ -302,5 +298,5 @@ function statusText(status: BookingStatus) {
 .booking-item__meta { display: flex; flex-wrap: wrap; gap: 12px; color: var(--text-secondary); font-size: 13px; }
 .booking-item__action, .button-row { display: flex; gap: 10px; }
 .dialog-card { padding: 16px; border-radius: 18px; background: linear-gradient(180deg, #fff, #f8fbff); border: 1px solid var(--border-soft); }
-@media (max-width: 960px) { .admin-overview { grid-template-columns: 1fr; } .booking-item, .booking-item__head, .booking-item__action, .button-row { flex-direction: column; align-items: stretch; } }
+@media (max-width: 960px) { .admin-hero { grid-template-columns: 1fr; } .booking-item, .booking-item__head, .booking-item__action, .button-row { flex-direction: column; align-items: stretch; } }
 </style>

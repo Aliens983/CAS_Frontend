@@ -123,10 +123,10 @@ const resetRules: FormRules = {
 async function refreshCaptcha() {
   try {
     const response = await request.get('/captcha') as unknown as { uuid: string; imageUrl: string }
-    // 后端返回的是绝对URL如 http://localhost:18080/uploads/xxx.png
-    // 需转换为走Vite代理的路径 /api/uploads/xxx.png → /api/v1/uploads/xxx.png
-    const url = new URL(response.imageUrl)
-    captchaImage.value = '/api' + url.pathname
+    // 后端返回 http://localhost:18080/api/v1/uploads/xxx.png
+    // 转为走Vite代理的路径 /api/uploads/xxx.png
+    const path = new URL(response.imageUrl).pathname.replace('/api/v1', '')
+    captchaImage.value = '/api' + path
   } catch {
     captchaImage.value = ''
     ElMessage.warning('验证码加载失败，点击刷新重试')

@@ -1,29 +1,15 @@
 <template>
   <div class="page-shell">
-    <section class="page-hero page-hero--single">
-      <div class="page-hero__main">
-        <span class="page-hero__chip">用户管理</span>
-        <h1 class="page-hero__title">账号管理与角色授权</h1>
-        <p class="page-hero__desc">管理平台内的所有用户账号，支持角色分配、权限设置与账号信息查询。</p>
+    <section class="admin-hero">
+      <div class="admin-hero__main">
+        <span class="hero-chip">用户管理</span>
+        <h1>账号管理与角色授权</h1>
+        <p>管理平台内的所有用户账号，支持角色分配、权限设置与账号信息查询。</p>
       </div>
-    </section>
-
-    <section class="admin-overview">
-      <article class="overview-card" @click="openOverview('all')">
-        <span>用户总数</span>
-        <strong>{{ tableData.length }}</strong>
-        <small>所有已注册的用户账号</small>
-      </article>
-      <article class="overview-card" @click="openOverview('admin')">
-        <span>管理员</span>
-        <strong>{{ adminCount }}</strong>
-        <small>包括管理员和超级管理员</small>
-      </article>
-      <article class="overview-card" @click="openOverview('active')">
-        <span>活跃账号</span>
-        <strong>{{ tableData.length }}</strong>
-        <small>当前正常使用中的账号</small>
-      </article>
+      <div class="admin-hero__signal">
+        <div class="signal-card"><span>用户总数</span><strong>{{ tableData.length }}</strong><small>所有已注册账号</small></div>
+        <div class="signal-card"><span>管理员</span><strong>{{ adminCount }}</strong><small>含超级管理员</small></div>
+      </div>
     </section>
 
     <el-card class="panel-card">
@@ -135,17 +121,6 @@ onMounted(async () => {
   }
 })
 
-function openOverview(mode: 'all' | 'admin' | 'active') {
-  const mapping = {
-    all: { title: '全部用户', items: tableData.value.map((item) => `${item.username} / ${item.department}`) },
-    admin: { title: '管理员账号', items: tableData.value.filter((item) => item.role !== 'user').map((item) => `${item.username} / ${roleText(item.role)}`) },
-    active: { title: '活跃账号', items: tableData.value.map((item) => `${item.username} / 启用`) },
-  }
-  overviewTitle.value = mapping[mode].title
-  overviewItems.value = mapping[mode].items
-  overviewVisible.value = true
-}
-
 function detailUser(item: UserInfo) {
   overviewTitle.value = `${item.username} 账号详情`
   overviewItems.value = [`邮箱：${item.email}`, `电话：${item.phone}`, `角色：${roleText(item.role)}`]
@@ -190,12 +165,34 @@ function roleText(role: UserRole) {
 </script>
 
 <style scoped lang="scss">
-.admin-overview { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
-.overview-card { position: relative; display: grid; gap: 8px; padding: 22px; border-radius: 22px; background: rgba(255,255,255,.92); border: 1px solid var(--border-soft); box-shadow: var(--shadow-card); overflow: hidden; cursor: pointer; transition: transform .26s ease, box-shadow .26s ease; }
-.overview-card::after { content: ''; position: absolute; inset: auto -24px -24px auto; width: 92px; height: 92px; border-radius: 50%; background: radial-gradient(circle, rgba(20,88,212,.08), rgba(20,88,212,0)); pointer-events: none; }
-.overview-card:hover { transform: translateY(-6px); box-shadow: var(--shadow-card-hover); }
-.overview-card span, .overview-card small { color: var(--text-secondary); }
-.overview-card strong { font-size: 34px; }
+.admin-hero {
+  position: relative; display: grid; grid-template-columns: 1.2fr 0.8fr; gap: 20px;
+  padding: 32px; border-radius: 30px; color: #fff;
+  background: linear-gradient(135deg, #0f172a, #132949 55%, #1458d4);
+  box-shadow: var(--shadow-card); overflow: hidden;
+}
+.admin-hero::before {
+  content:""; position:absolute; inset:0;
+  background: radial-gradient(circle at 18% 20%, rgba(255,255,255,.12), transparent 18%),
+              linear-gradient(140deg, transparent 14%, rgba(255,255,255,.08) 42%, transparent 72%);
+}
+.admin-hero::after {
+  content:""; position:absolute; inset:-30% -6% auto auto; width:280px; height:280px; border-radius:50%;
+  background: radial-gradient(circle, rgba(59,130,246,.24), rgba(59,130,246,0));
+  animation: adminGlow 8s ease-in-out infinite; pointer-events:none;
+}
+.admin-hero__main, .admin-hero__signal { position:relative; z-index:1; }
+.hero-chip { display:inline-flex; padding:6px 12px; border-radius:999px; font-size:12px; letter-spacing:.08em; background:rgba(255,255,255,.12); margin-bottom:14px; }
+.admin-hero h1 { margin:12px 0 10px; font-size:36px; line-height:1.18; }
+.admin-hero p { max-width:740px; margin:0; line-height:1.8; color:rgba(255,255,255,.82); }
+.admin-hero__signal { display:grid; gap:12px; }
+.signal-card { display:grid; gap:4px; padding:16px 18px; border-radius:16px; background:rgba(255,255,255,.08); border:1px solid rgba(255,255,255,.1); cursor:pointer; transition:background .2s; }
+.signal-card:hover { background:rgba(255,255,255,.14); }
+.signal-card span { font-size:13px; color:rgba(255,255,255,.64); }
+.signal-card strong { font-size:26px; font-weight:700; }
+.signal-card small { font-size:12px; color:rgba(255,255,255,.5); }
+
+@keyframes adminGlow { 0%,100%{ transform:translate3d(0,0,0) scale(1); } 50%{ transform:translate3d(-16px,-8px,0) scale(1.06); } }
 .user-stack, .dialog-list, .drawer-stack { display: grid; gap: 14px; }
 .user-item { display: grid; grid-template-columns: auto 1fr auto; gap: 16px; padding: 18px; border-radius: 20px; border: 1px solid var(--border-soft); background: linear-gradient(180deg, #fff, #f8fbff); transition: transform .24s ease, box-shadow .24s ease, border-color .24s ease; }
 .user-item:hover { transform: translateY(-4px); box-shadow: 0 18px 28px rgba(20,33,61,.1); border-color: rgba(20,88,212,.14); }
@@ -206,5 +203,5 @@ function roleText(role: UserRole) {
 .user-item__meta { display: flex; flex-wrap: wrap; gap: 12px; color: var(--text-secondary); font-size: 13px; }
 .user-item__action { display: flex; align-items: center; gap: 10px; }
 .dialog-card { padding: 16px; border-radius: 18px; background: linear-gradient(180deg, #fff, #f8fbff); border: 1px solid var(--border-soft); }
-@media (max-width: 960px) { .admin-overview { grid-template-columns: 1fr; } .user-item, .user-item__head, .user-item__action { display: flex; flex-direction: column; align-items: stretch; } }
+@media (max-width: 960px) { .admin-hero { grid-template-columns: 1fr; } .user-item, .user-item__head, .user-item__action { display: flex; flex-direction: column; align-items: stretch; } }
 </style>

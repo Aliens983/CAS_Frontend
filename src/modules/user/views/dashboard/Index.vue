@@ -174,7 +174,6 @@ const activeService = ref<ServiceCard | null>(null)
 const bookings = ref<BookingRecord[]>([])
 const services = ref<ServiceCard[]>([])
 const loading = ref(false)
-
 onMounted(async () => {
   loading.value = true
   try {
@@ -717,4 +716,10 @@ function statusText(status: BookingStatus) {
   0%,100% { transform: translate(0, 0) scale(1); }
   50% { transform: translate(-20px, 20px) scale(1.08); }
 }
+
+.weather-widget { background: linear-gradient(180deg, #f0f9ff, #fff) !important; }
+.weather-mini { display: flex; align-items: center; gap: 14px; }
+.weather-mini__icon { font-size: 36px; }
+.weather-mini strong { font-size: 22px; }
+.weather-mini p { margin: 2px 0 0; color: var(--text-secondary); font-size: 13px; }
 </style>

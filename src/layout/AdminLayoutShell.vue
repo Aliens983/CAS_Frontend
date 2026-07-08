@@ -25,6 +25,10 @@
         <div>
           <div class="workspace__title">{{ titleMap[route.path] || '管理后台' }}</div>
         </div>
+        <div class="weather-pill" v-if="weather">
+          <span class="weather-pill__icon">{{ weatherIcon(weather.weather1) }}</span>
+          <span class="weather-pill__text">{{ weather.shi }} {{ weather.weather1 }} {{ weather.temp }}</span>
+        </div>
         <div class="workspace__actions">
           <el-button plain @click="router.push('/dashboard')">切到用户端</el-button>
           <el-button @click="logout">退出</el-button>
@@ -39,8 +43,20 @@
 </template>
 
 <script setup lang="ts">
+import { ref, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useUserStore } from '@/stores/user'
+import request from '@/utils/request'
+
+const weather = ref<{ shi: string; weather1: string; temp: string } | null>(null)
+
+onMounted(async () => {
+  try { weather.value = await request.get('/weather/local') as any } catch { /* 静默 */ }
+})
+
+function weatherIcon(d: string) {
+  if (!d) return '☀️'; if (d.includes('晴')) return '☀️'; if (d.includes('云')) return '⛅'; if (d.includes('雨')) return '🌧'; if (d.includes('雪')) return '🌨'; return '🌈'
+}
 
 const route = useRoute()
 const router = useRouter()
@@ -52,6 +68,7 @@ const navItems = [
   { label: '预约审核', path: '/admin/bookings' },
   { label: '用户与权限', path: '/admin/users' },
   { label: '系统设置', path: '/admin/system' },
+  { label: '工具箱', path: '/admin/tools' },
 ]
 
 const titleMap: Record<string, string> = {
@@ -60,6 +77,7 @@ const titleMap: Record<string, string> = {
   '/admin/bookings': '预约审核',
   '/admin/users': '用户与权限',
   '/admin/system': '系统设置',
+  '/admin/tools': '工具箱',
 }
 
 function logout() {
@@ -167,4 +185,9 @@ function logout() {
     align-items: stretch;
   }
 }
+
+.weather-pill { display: flex; align-items: center; gap: 6px; padding: 6px 14px; border-radius: 10px; background: rgba(20,88,212,.06); border: 1px solid rgba(20,88,212,.1); margin-right: 12px; }
+.weather-pill__icon { font-size: 18px; }
+.weather-pill__text { font-size: 12px; color: var(--text-secondary); white-space: nowrap; }
+@media (max-width: 900px) { .weather-pill { display: none; } }
 </style>

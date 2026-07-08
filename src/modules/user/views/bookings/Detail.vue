@@ -1,9 +1,17 @@
 <template>
   <div class="page-shell">
-    <section class="page-hero">
-      <el-button text @click="router.back()">← 返回</el-button>
-      <h1 class="page-hero__title">预约详情</h1>
-    </section>
+    <div class="detail-hero">
+      <button class="back-btn" @click="router.back()">
+        <el-icon><ArrowLeft /></el-icon>
+        <span>返回</span>
+      </button>
+      <div>
+        <span class="detail-hero__chip">预约详情</span>
+        <h1>{{ booking?.serviceName || '加载中...' }}</h1>
+        <p v-if="booking">{{ booking.bookingNo }} · {{ booking.date }} {{ booking.timeRange }}</p>
+      </div>
+    </div>
+
     <el-card class="panel-card" v-if="booking">
       <div class="detail-grid">
         <div class="detail-row"><span>预约编号</span><strong>{{ booking.bookingNo }}</strong></div>
@@ -13,8 +21,11 @@
         <div class="detail-row"><span>地点</span><strong>{{ booking.location }}</strong></div>
         <div class="detail-row"><span>申请人</span><strong>{{ booking.applicant }}</strong></div>
         <div class="detail-row"><span>部门</span><strong>{{ booking.department }}</strong></div>
-        <div class="detail-row"><span>状态</span><el-tag :type="statusTag(booking.status)">{{ statusText(booking.status) }}</el-tag></div>
-        <div class="detail-row"><span>备注</span><strong>{{ booking.remarks }}</strong></div>
+        <div class="detail-row">
+          <span>状态</span>
+          <el-tag :type="statusTag(booking.status)" effect="plain" size="small">{{ statusText(booking.status) }}</el-tag>
+        </div>
+        <div class="detail-row"><span>备注</span><strong>{{ booking.remarks || '暂无' }}</strong></div>
         <div class="detail-row"><span>创建时间</span><strong>{{ booking.createdAt }}</strong></div>
       </div>
     </el-card>
@@ -25,6 +36,7 @@
 import { ref, onMounted } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { ElMessage } from 'element-plus'
+import { ArrowLeft } from '@element-plus/icons-vue'
 import { fetchBookingRecords } from '@/common/campus'
 import type { BookingRecord, BookingStatus } from '@/common/types'
 
@@ -53,8 +65,27 @@ function statusText(status: BookingStatus) {
 </script>
 
 <style scoped lang="scss">
-.detail-grid { display: grid; gap: 16px; }
-.detail-row { display: flex; gap: 16px; padding: 12px 0; border-bottom: 1px solid var(--border-soft); }
-.detail-row span { width: 100px; color: var(--text-secondary); flex-shrink: 0; }
-.detail-row strong { flex: 1; }
+.detail-hero {
+  padding: 28px 32px;
+  border-radius: 24px;
+  background: linear-gradient(135deg, #0e2647, #1458d4 62%, #52a1ff);
+  color: #fff;
+}
+.back-btn {
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 6px 14px; border: 1px solid rgba(255,255,255,.2); border-radius: 8px;
+  background: rgba(255,255,255,.08); color: rgba(255,255,255,.9);
+  font-size: 13px; cursor: pointer; margin-bottom: 20px;
+  transition: background .2s, border-color .2s;
+}
+.back-btn:hover { background: rgba(255,255,255,.16); border-color: rgba(255,255,255,.35); }
+.detail-hero__chip { display: inline-block; padding: 4px 10px; border-radius: 999px; font-size: 11px; letter-spacing: .06em; background: rgba(255,255,255,.14); margin-bottom: 10px; }
+.detail-hero h1 { margin: 0 0 6px; font-size: 28px; font-weight: 700; }
+.detail-hero p { margin: 0; color: rgba(255,255,255,.7); font-size: 14px; }
+
+.detail-grid { display: grid; gap: 4px; }
+.detail-row { display: flex; gap: 16px; padding: 14px 0; border-bottom: 1px solid var(--border-soft); align-items: center; }
+.detail-row:last-child { border-bottom: none; }
+.detail-row span { width: 90px; color: var(--text-secondary); font-size: 13px; flex-shrink: 0; }
+.detail-row strong { flex: 1; font-size: 14px; }
 </style>

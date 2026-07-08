@@ -3,31 +3,24 @@
     <header class="shell__header glass-panel">
       <div class="brand" @click="router.push('/dashboard')">
         <div class="brand__mark">CAS</div>
-        <div class="brand__meta">
-          <strong>Campus Appointment</strong>
-          <span>校园统一预约门户</span>
-        </div>
+        <span class="brand__title">校园统一预约门户</span>
       </div>
 
       <nav class="nav">
-        <button
-          v-for="item in navItems"
-          :key="item.path"
-          class="nav__item"
-          :class="{ 'is-active': route.path.startsWith(item.path) }"
-          @click="router.push(item.path)"
-        >
-          {{ item.label }}
-        </button>
+        <button v-for="item in navItems" :key="item.path" class="nav__item" :class="{ 'is-active': route.path.startsWith(item.path) }" @click="router.push(item.path)">{{ item.label }}</button>
       </nav>
 
-      <div class="user">
-        <div class="user__meta">
-          <strong>{{ userStore.userInfo?.username || '校园用户' }}</strong>
-          <span>{{ userStore.userInfo?.department || '校园预约中心' }}</span>
+      <div class="header-right">
+        <div class="weather-pill" v-if="weather">
+          <span class="weather-pill__icon">{{ weatherIcon(weather.weather1) }}</span>
+          <span class="weather-pill__text">{{ weather.shi }} {{ weather.weather1 }} {{ weather.temp }}</span>
         </div>
-        <el-dropdown @command="handleCommand">
-          <el-avatar :size="40">{{ initial }}</el-avatar>
+
+        <el-dropdown @command="handleCommand" class="user-dropdown">
+          <span class="user-trigger">
+            <el-avatar :size="34">{{ initial }}</el-avatar>
+            <span class="user-name">{{ userStore.userInfo?.username || '校园用户' }}</span>
+          </span>
           <template #dropdown>
             <el-dropdown-menu>
               <el-dropdown-item command="profile">个人中心</el-dropdown-item>
@@ -53,12 +46,22 @@
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue'
+import { computed, ref, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useUserStore } from '@/stores/user'
+import request from '@/utils/request'
 
 const route = useRoute()
 const router = useRouter()
+const weather = ref<{ shi: string; weather1: string; temp: string } | null>(null)
+
+onMounted(async () => {
+  try { weather.value = await request.get('/weather/local') as any } catch { /* 静默 */ }
+})
+
+function weatherIcon(d: string) {
+  if (!d) return '☀️'; if (d.includes('晴')) return '☀️'; if (d.includes('云')) return '⛅'; if (d.includes('雨')) return '🌧'; if (d.includes('雪')) return '🌨'; return '🌈'
+}
 const userStore = useUserStore()
 
 const navItems = [
@@ -87,77 +90,41 @@ function handleCommand(command: string) {
 }
 
 .shell__header {
-  display: grid;
-  grid-template-columns: auto 1fr auto;
-  gap: 18px;
+  display: flex;
   align-items: center;
-  padding: 16px 18px;
-  border-radius: 24px;
+  gap: 16px;
+  padding: 10px 20px;
+  border-radius: 20px;
+  flex-wrap: nowrap;
 }
 
 .brand {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 10px;
   cursor: pointer;
+  flex-shrink: 0;
 }
-
 .brand__mark {
-  width: 44px;
-  height: 44px;
-  display: grid;
-  place-items: center;
-  border-radius: 14px;
-  color: #fff;
-  font-weight: 800;
+  width: 36px; height: 36px; display: grid; place-items: center;
+  border-radius: 10px; color: #fff; font-weight: 800; font-size: 14px;
   background: linear-gradient(135deg, #1458d4, #4c98ff);
 }
+.brand__title { font-size: 14px; font-weight: 600; color: var(--text-primary); white-space: nowrap; }
 
-.brand__meta {
-  display: grid;
-  gap: 4px;
-}
-
-.brand__meta span,
-.user__meta span {
-  color: var(--text-secondary);
-  font-size: 12px;
-}
-
-.nav {
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: center;
-  gap: 10px;
-}
-
+.nav { display: flex; gap: 4px; flex: 1; justify-content: center; }
 .nav__item {
-  min-width: 92px;
-  padding: 10px 18px;
-  border: 0;
-  border-radius: 999px;
-  background: rgba(20, 88, 212, 0.06);
-  color: var(--text-secondary);
-  cursor: pointer;
+  padding: 8px 16px; border: 0; border-radius: 999px; font-size: 13px;
+  background: transparent; color: var(--text-secondary); cursor: pointer; white-space: nowrap;
+  transition: background .2s, color .2s;
 }
+.nav__item:hover { background: rgba(20,88,212,.06); color: var(--brand-500); }
+.nav__item.is-active { color: #fff; background: linear-gradient(135deg, #1458d4, #3386ff); }
 
-.nav__item.is-active {
-  color: #fff;
-  background: linear-gradient(135deg, #1458d4, #3386ff);
-}
-
-.user {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-}
-
-.user__meta {
-  display: grid;
-  justify-items: end;
-  gap: 2px;
-  text-align: right;
-}
+.header-right { display: flex; align-items: center; gap: 12px; flex-shrink: 0; }
+.user-dropdown { cursor: pointer; }
+.user-trigger { display: flex; align-items: center; gap: 8px; }
+.user-name { font-size: 13px; font-weight: 500; color: var(--text-primary); max-width: 80px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 
 .hero {
   margin-top: 18px;
@@ -188,36 +155,19 @@ function handleCommand(command: string) {
   margin-top: 18px;
 }
 
-@media (max-width: 1100px) {
-  .shell__header,
-  .hero {
-    grid-template-columns: 1fr;
-  }
-
-  .nav {
-    justify-content: flex-start;
-  }
-
-  .user {
-    justify-content: space-between;
-  }
+@media (max-width: 960px) {
+  .shell__header { flex-wrap: wrap; gap: 10px; }
+  .nav { order: 3; flex-basis: 100%; justify-content: flex-start; }
+  .brand__title { display: none; }
+  .user-name { display: none; }
+}
+@media (max-width: 500px) {
+  .shell { padding: 8px; }
+  .nav__item { padding: 6px 12px; font-size: 12px; }
 }
 
-@media (max-width: 760px) {
-  .shell {
-    padding: 12px;
-  }
-
-  .hero {
-    padding: 20px;
-  }
-
-  .hero h1 {
-    font-size: 28px;
-  }
-
-  .user__meta {
-    display: none;
-  }
-}
+.weather-pill { display: flex; align-items: center; gap: 5px; padding: 4px 12px; border-radius: 8px; background: rgba(20,88,212,.05); border: 1px solid rgba(20,88,212,.1); }
+.weather-pill__icon { font-size: 16px; }
+.weather-pill__text { font-size: 12px; color: var(--text-secondary); white-space: nowrap; }
+@media (max-width: 860px) { .weather-pill__text { display: none; } }
 </style>

@@ -1,32 +1,18 @@
 <template>
   <div class="page-shell">
-    <section class="page-hero page-hero--single">
-      <div class="page-hero__main">
-        <span class="page-hero__chip">服务治理</span>
-        <h1 class="page-hero__title">服务目录与状态管理</h1>
-        <p class="page-hero__desc">维护服务目录与开放状态，管理各项预约服务的上架、编辑与停用。</p>
-        <div class="page-hero__actions">
+    <section class="admin-hero">
+      <div class="admin-hero__main">
+        <span class="hero-chip">服务治理</span>
+        <h1>服务目录与状态管理</h1>
+        <p>维护服务目录与开放状态，管理各项预约服务的上架、编辑与停用。</p>
+        <div class="hero-actions">
           <el-button type="primary" size="large" @click="createDrawer = true">新增服务</el-button>
         </div>
       </div>
-    </section>
-
-    <section class="admin-overview">
-      <article class="overview-card" @click="openOverview('all')">
-        <span>服务总数</span>
-        <strong>{{ services.length }}</strong>
-        <small>已纳入统一预约体系</small>
-      </article>
-      <article class="overview-card" @click="openOverview('available')">
-        <span>可用服务</span>
-        <strong>{{ availableCount }}</strong>
-        <small>当前可直接开放给用户预约</small>
-      </article>
-      <article class="overview-card" @click="openOverview('maintenance')">
-        <span>维护中</span>
-        <strong>{{ maintenanceCount }}</strong>
-        <small>适合接入暂停开放和公告提醒</small>
-      </article>
+      <div class="admin-hero__signal">
+        <div class="signal-card"><span>服务总数</span><strong>{{ services.length }}</strong><small>已纳入统一管理</small></div>
+        <div class="signal-card"><span>可用服务</span><strong>{{ availableCount }}</strong><small>当前可开放预约</small></div>
+      </div>
     </section>
 
     <el-card class="panel-card">
@@ -98,7 +84,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, reactive, ref, onMounted } from 'vue'
+import { computed, reactive, ref, onMounted, watch } from 'vue'
 import { ElMessage } from 'element-plus'
 import request from '@/utils/request'
 import { fetchServiceCards } from '@/services/campus'
@@ -126,7 +112,6 @@ const filteredServices = computed(() =>
   }),
 )
 const availableCount = computed(() => services.value.filter((item) => item.status === 'available').length)
-const maintenanceCount = computed(() => services.value.filter((item) => item.status !== 'available').length)
 const serviceDrawerVisible = computed({
   get: () => Boolean(selectedService.value),
   set: (value: boolean) => {
@@ -134,17 +119,14 @@ const serviceDrawerVisible = computed({
   },
 })
 
-// 打开编辑抽屉时初始化表单
-const unwatchSelected = computed(() => {
-  if (selectedService.value) {
-    editForm.name = selectedService.value.name
-    editForm.category = selectedService.value.category
-    editForm.description = selectedService.value.description
+// 打开编辑抽屉时自动填充当前服务数据
+watch(selectedService, (item) => {
+  if (item) {
+    editForm.name = item.name
+    editForm.category = item.category
+    editForm.description = item.description
   }
-  return selectedService.value
 })
-// 触发 computed 副作用
-void unwatchSelected
 
 onMounted(async () => {
   loading.value = true
@@ -157,17 +139,6 @@ onMounted(async () => {
     loading.value = false
   }
 })
-
-function openOverview(mode: 'all' | 'available' | 'maintenance') {
-  const mapping = {
-    all: { title: '服务总览', items: services.value.map((item) => `${item.name} / ${item.category}`) },
-    available: { title: '可用服务', items: services.value.filter((item) => item.status === 'available').map((item) => item.name) },
-    maintenance: { title: '维护中服务', items: services.value.filter((item) => item.status !== 'available').map((item) => item.name) },
-  }
-  overviewTitle.value = mapping[mode].title
-  overviewItems.value = mapping[mode].items
-  overviewVisible.value = true
-}
 
 function openAccess(item: ServiceCard) {
   overviewTitle.value = `${item.name} 接入说明`
@@ -182,7 +153,7 @@ async function saveEdit() {
   if (!selectedService.value) return
   saving.value = true
   try {
-    await request.put(`/app/services/${selectedService.value.id}`, {
+    await request.put(`/admin/services/${selectedService.value.id}`, {
       serviceName: editForm.name,
       serviceDescribe: editForm.description,
     })
@@ -230,12 +201,35 @@ async function saveCreate() {
 </script>
 
 <style scoped lang="scss">
-.admin-overview { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
-.overview-card { position: relative; display: grid; gap: 8px; padding: 22px; border-radius: 22px; background: rgba(255,255,255,.92); border: 1px solid var(--border-soft); box-shadow: var(--shadow-card); overflow: hidden; cursor: pointer; transition: transform .26s ease, box-shadow .26s ease; }
-.overview-card::after { content: ''; position: absolute; inset: auto -24px -24px auto; width: 92px; height: 92px; border-radius: 50%; background: radial-gradient(circle, rgba(20,88,212,.08), rgba(20,88,212,0)); pointer-events: none; }
-.overview-card:hover { transform: translateY(-6px); box-shadow: var(--shadow-card-hover); }
-.overview-card span, .overview-card small { color: var(--text-secondary); }
-.overview-card strong { font-size: 34px; }
+.admin-hero {
+  position: relative; display: grid; grid-template-columns: 1.2fr 0.8fr; gap: 20px;
+  padding: 32px; border-radius: 30px; color: #fff;
+  background: linear-gradient(135deg, #0f172a, #132949 55%, #1458d4);
+  box-shadow: var(--shadow-card); overflow: hidden;
+}
+.admin-hero::before {
+  content:""; position:absolute; inset:0;
+  background: radial-gradient(circle at 18% 20%, rgba(255,255,255,.12), transparent 18%),
+              linear-gradient(140deg, transparent 14%, rgba(255,255,255,.08) 42%, transparent 72%);
+}
+.admin-hero::after {
+  content:""; position:absolute; inset:-30% -6% auto auto; width:280px; height:280px; border-radius:50%;
+  background: radial-gradient(circle, rgba(59,130,246,.24), rgba(59,130,246,0));
+  animation: adminGlow 8s ease-in-out infinite; pointer-events:none;
+}
+.admin-hero__main, .admin-hero__signal { position:relative; z-index:1; }
+.hero-chip { display:inline-flex; padding:6px 12px; border-radius:999px; font-size:12px; letter-spacing:.08em; background:rgba(255,255,255,.12); margin-bottom:14px; }
+.admin-hero h1 { margin:12px 0 10px; font-size:36px; line-height:1.18; }
+.admin-hero p { max-width:740px; margin:0; line-height:1.8; color:rgba(255,255,255,.82); }
+.hero-actions { display:flex; gap:12px; margin-top:22px; }
+.admin-hero__signal { display:grid; gap:12px; }
+.signal-card { display:grid; gap:4px; padding:16px 18px; border-radius:16px; background:rgba(255,255,255,.08); border:1px solid rgba(255,255,255,.1); cursor:pointer; transition:background .2s; }
+.signal-card:hover { background:rgba(255,255,255,.14); }
+.signal-card span { font-size:13px; color:rgba(255,255,255,.64); }
+.signal-card strong { font-size:26px; font-weight:700; }
+.signal-card small { font-size:12px; color:rgba(255,255,255,.5); }
+
+@keyframes adminGlow { 0%,100%{ transform:translate3d(0,0,0) scale(1); } 50%{ transform:translate3d(-16px,-8px,0) scale(1.06); } }
 .toolbar { display: flex; gap: 12px; }
 .service-stack, .dialog-list { display: grid; gap: 14px; }
 .service-item { display: grid; grid-template-columns: auto 1fr auto; gap: 16px; padding: 18px; border-radius: 20px; border: 1px solid var(--border-soft); background: linear-gradient(180deg, #fff, #f8fbff); transition: transform .24s ease, box-shadow .24s ease, border-color .24s ease; }
@@ -247,5 +241,5 @@ async function saveCreate() {
 .service-item__meta { display: grid; gap: 6px; color: var(--text-secondary); font-size: 13px; }
 .service-item__action { display: flex; align-items: center; gap: 10px; }
 .dialog-card { padding: 16px; border-radius: 18px; background: linear-gradient(180deg, #fff, #f8fbff); border: 1px solid var(--border-soft); }
-@media (max-width: 960px) { .admin-overview { grid-template-columns: 1fr; } .toolbar, .service-item, .service-item__head, .service-item__action { display: flex; flex-direction: column; align-items: stretch; } }
+@media (max-width: 960px) { .admin-hero { grid-template-columns: 1fr; } .toolbar, .service-item, .service-item__head, .service-item__action { display: flex; flex-direction: column; align-items: stretch; } }
 </style>

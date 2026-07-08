@@ -131,7 +131,6 @@ const adminSummary = ref<AdminSummary>({
   activeBookings: 0,
   approvalRate: '0%',
 })
-
 onMounted(async () => {
   try {
     adminSummary.value = await fetchAdminSummary()

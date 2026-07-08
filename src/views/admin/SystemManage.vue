@@ -1,29 +1,15 @@
 <template>
   <div class="page-shell">
-    <section class="page-hero page-hero--single">
-      <div class="page-hero__main">
-        <span class="page-hero__chip">系统设置</span>
-        <h1 class="page-hero__title">预约策略与通知配置</h1>
-        <p class="page-hero__desc">统一管理系统运行参数，配置预约策略、通知规则与业务约束条件。</p>
+    <section class="admin-hero">
+      <div class="admin-hero__main">
+        <span class="hero-chip">系统设置</span>
+        <h1>预约策略与通知配置</h1>
+        <p>统一管理系统运行参数，配置预约策略、通知规则与业务约束条件。</p>
       </div>
-    </section>
-
-    <section class="admin-overview">
-      <article class="overview-card">
-        <span>策略分组</span>
-        <strong>{{ enabledNotifications }}</strong>
-        <small>预约、通知、约束统一管理</small>
-      </article>
-      <article class="overview-card">
-        <span>启用通知</span>
-        <strong>{{ enabledNotifications }}</strong>
-        <small>当前保留站内信和邮件提醒</small>
-      </article>
-      <article class="overview-card">
-        <span>配置状态</span>
-        <strong>运行中</strong>
-        <small>系统运行稳定，配置即时生效</small>
-      </article>
+      <div class="admin-hero__signal">
+        <div class="signal-card"><span>策略分组</span><strong>3</strong><small>预约、通知、约束</small></div>
+        <div class="signal-card"><span>启用通知</span><strong>{{ enabledNotifications }}</strong><small>站内信与邮件提醒</small></div>
+      </div>
     </section>
 
     <section class="grid-cards">
@@ -113,49 +99,34 @@ const enabledNotifications = computed(() =>
 </script>
 
 <style scoped lang="scss">
-.admin-overview {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 16px;
+.admin-hero {
+  position: relative; display: grid; grid-template-columns: 1.2fr 0.8fr; gap: 20px;
+  padding: 32px; border-radius: 30px; color: #fff;
+  background: linear-gradient(135deg, #0f172a, #132949 55%, #1458d4);
+  box-shadow: var(--shadow-card); overflow: hidden;
 }
+.admin-hero::before {
+  content:""; position:absolute; inset:0;
+  background: radial-gradient(circle at 18% 20%, rgba(255,255,255,.12), transparent 18%),
+              linear-gradient(140deg, transparent 14%, rgba(255,255,255,.08) 42%, transparent 72%);
+}
+.admin-hero::after {
+  content:""; position:absolute; inset:-30% -6% auto auto; width:280px; height:280px; border-radius:50%;
+  background: radial-gradient(circle, rgba(59,130,246,.24), rgba(59,130,246,0));
+  animation: adminGlow 8s ease-in-out infinite; pointer-events:none;
+}
+.admin-hero__main, .admin-hero__signal { position:relative; z-index:1; }
+.hero-chip { display:inline-flex; padding:6px 12px; border-radius:999px; font-size:12px; letter-spacing:.08em; background:rgba(255,255,255,.12); margin-bottom:14px; }
+.admin-hero h1 { margin:12px 0 10px; font-size:36px; line-height:1.18; }
+.admin-hero p { max-width:740px; margin:0; line-height:1.8; color:rgba(255,255,255,.82); }
+.admin-hero__signal { display:grid; gap:12px; }
+.signal-card { display:grid; gap:4px; padding:16px 18px; border-radius:16px; background:rgba(255,255,255,.08); border:1px solid rgba(255,255,255,.1); transition:background .2s; }
+.signal-card:hover { background:rgba(255,255,255,.14); }
+.signal-card span { font-size:13px; color:rgba(255,255,255,.64); }
+.signal-card strong { font-size:26px; font-weight:700; }
+.signal-card small { font-size:12px; color:rgba(255,255,255,.5); }
 
-.overview-card {
-  position: relative;
-  display: grid;
-  gap: 8px;
-  padding: 22px;
-  border-radius: 22px;
-  background: rgba(255, 255, 255, 0.92);
-  border: 1px solid var(--border-soft);
-  box-shadow: var(--shadow-card);
-  overflow: hidden;
-  transition: transform 0.26s ease, box-shadow 0.26s ease;
-}
-
-.overview-card::after {
-  content: '';
-  position: absolute;
-  inset: auto -24px -24px auto;
-  width: 92px;
-  height: 92px;
-  border-radius: 50%;
-  background: radial-gradient(circle, rgba(20, 88, 212, 0.08), rgba(20, 88, 212, 0));
-  pointer-events: none;
-}
-
-.overview-card:hover {
-  transform: translateY(-6px);
-  box-shadow: var(--shadow-card-hover);
-}
-
-.overview-card span,
-.overview-card small {
-  color: var(--text-secondary);
-}
-
-.overview-card strong {
-  font-size: 34px;
-}
+@keyframes adminGlow { 0%,100%{ transform:translate3d(0,0,0) scale(1); } 50%{ transform:translate3d(-16px,-8px,0) scale(1.06); } }
 
 .span-6 {
   grid-column: span 6;
@@ -194,7 +165,7 @@ const enabledNotifications = computed(() =>
 }
 
 @media (max-width: 1200px) {
-  .admin-overview {
+  .admin-hero {
     grid-template-columns: 1fr;
   }
 

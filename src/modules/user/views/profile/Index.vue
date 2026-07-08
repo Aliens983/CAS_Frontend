@@ -14,42 +14,78 @@
     </section>
 
     <section class="grid-cards">
-      <el-card class="panel-card span-4">
-        <div class="profile-summary">
-          <div class="profile-summary__halo" />
-          <el-avatar :size="92">{{ user?.username?.slice(0, 1) || 'U' }}</el-avatar>
-          <h3>{{ user?.username || '未登录' }}</h3>
-          <p>{{ user?.department || '未分配部门' }}</p>
-          <el-tag :type="user?.role === 'admin' || user?.role === 'super_admin' ? 'danger' : 'success'">{{ roleLabel }}</el-tag>
+      <!-- 个人信息卡片 -->
+      <div class="profile-card span-5">
+        <div class="profile-card__avatar">
+          <el-avatar :size="72">{{ user?.username?.slice(0, 1) || 'U' }}</el-avatar>
+          <div class="profile-card__badge" :class="roleBadgeClass"></div>
         </div>
-      </el-card>
+        <div class="profile-card__info">
+          <h2>{{ user?.username || '未登录' }}</h2>
+          <p class="profile-card__dept">{{ user?.department || '未分配部门' }}</p>
+          <p class="profile-card__email">{{ user?.email || '-' }}</p>
+          <el-tag :type="roleTagType" size="small" effect="plain">{{ roleLabel }}</el-tag>
+        </div>
+      </div>
 
-      <el-card class="panel-card span-8">
-        <template #header><div class="section-head"><h3 class="section-head__title">账户信息</h3></div></template>
-        <div class="info-list">
-          <div class="info-row"><span>邮箱</span><strong>{{ user?.email || '-' }}</strong></div>
-          <div class="info-row"><span>手机号</span><strong>{{ user?.phone || '-' }}</strong></div>
-          <div class="info-row"><span>角色</span><strong>{{ roleLabel }}</strong></div>
-          <div class="info-row"><span>创建时间</span><strong>{{ user?.createdAt || '-' }}</strong></div>
-        </div>
-        <el-divider />
-        <div class="preference-grid">
-          <div class="preference-card" @click="preferenceVisible = true">
-            <div>
-              <strong>通知偏好</strong>
-              <p>管理邮件和系统通知的接收方式</p>
-            </div>
-            <el-icon><ArrowRight /></el-icon>
+      <!-- 账户详情 -->
+      <div class="info-card span-7">
+        <h3 class="info-card__title">账户信息</h3>
+        <div class="info-grid">
+          <div class="info-item">
+            <span class="info-item__label">邮箱</span>
+            <span class="info-item__value">{{ user?.email || '-' }}</span>
           </div>
-          <div class="preference-card" @click="handleLogout">
-            <div>
-              <strong>退出登录</strong>
-              <p>清除登录状态并返回登录页</p>
-            </div>
-            <el-icon><ArrowRight /></el-icon>
+          <div class="info-item">
+            <span class="info-item__label">手机</span>
+            <span class="info-item__value">{{ user?.phone || '未绑定' }}</span>
+          </div>
+          <div class="info-item">
+            <span class="info-item__label">角色</span>
+            <span class="info-item__value">{{ roleLabel }}</span>
+          </div>
+          <div class="info-item">
+            <span class="info-item__label">注册时间</span>
+            <span class="info-item__value">{{ user?.createdAt || '-' }}</span>
           </div>
         </div>
-      </el-card>
+      </div>
+    </section>
+
+    <!-- 操作区 -->
+    <section class="grid-cards">
+      <div class="action-card span-6" @click="preferenceVisible = true">
+        <div class="action-card__icon">🔔</div>
+        <div class="action-card__text">
+          <strong>通知偏好</strong>
+          <p>管理邮件和系统通知的接收方式</p>
+        </div>
+        <el-icon class="action-card__arrow"><ArrowRight /></el-icon>
+      </div>
+      <div class="action-card span-6" @click="router.push('/bookings')">
+        <div class="action-card__icon">📋</div>
+        <div class="action-card__text">
+          <strong>我的预约</strong>
+          <p>查看进行中和历史的预约记录</p>
+        </div>
+        <el-icon class="action-card__arrow"><ArrowRight /></el-icon>
+      </div>
+      <div class="action-card span-6" @click="router.push('/messages')">
+        <div class="action-card__icon">💬</div>
+        <div class="action-card__text">
+          <strong>消息中心</strong>
+          <p>查看审批通知和系统消息</p>
+        </div>
+        <el-icon class="action-card__arrow"><ArrowRight /></el-icon>
+      </div>
+      <div class="action-card action-card--danger span-6" @click="handleLogout">
+        <div class="action-card__icon">🚪</div>
+        <div class="action-card__text">
+          <strong>退出登录</strong>
+          <p>清除登录状态并返回登录页</p>
+        </div>
+        <el-icon class="action-card__arrow"><ArrowRight /></el-icon>
+      </div>
     </section>
 
     <el-drawer v-model="quickVisible" title="快捷操作" size="420px">
@@ -67,6 +103,7 @@
 import { computed, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
+import { ArrowRight } from '@element-plus/icons-vue'
 import { useUserStore } from '@/common/stores/user'
 
 const router = useRouter()
@@ -77,10 +114,23 @@ const quickVisible = ref(false)
 const user = computed(() => userStore.userInfo)
 
 const roleLabel = computed(() => {
-  const role = user.value?.role
-  if (role === 'super_admin') return '超级管理员'
-  if (role === 'admin') return '管理员'
+  const r = user.value?.role
+  if (r === 'super_admin') return '超级管理员'
+  if (r === 'admin') return '管理员'
   return '普通用户'
+})
+
+const roleTagType = computed(() => {
+  const r = user.value?.role
+  if (r === 'super_admin' || r === 'admin') return 'danger'
+  return 'success'
+})
+
+const roleBadgeClass = computed(() => {
+  const r = user.value?.role
+  if (r === 'super_admin') return 'is-super'
+  if (r === 'admin') return 'is-admin'
+  return 'is-user'
 })
 
 function handleLogout() {
@@ -98,39 +148,79 @@ function handleLogout() {
   box-shadow: var(--shadow-card); overflow: hidden;
 }
 .dashboard-hero::before {
-  content: ""; position: absolute; inset: 0;
-  background: radial-gradient(circle at 20% 20%, rgba(255,255,255,0.16), transparent 22%),
-              linear-gradient(120deg, transparent 14%, rgba(255,255,255,0.08) 36%, transparent 62%);
+  content:""; position:absolute; inset:0;
+  background: radial-gradient(circle at 20% 20%, rgba(255,255,255,.16), transparent 22%),
+              linear-gradient(120deg, transparent 14%, rgba(255,255,255,.08) 36%, transparent 62%);
 }
 .dashboard-hero::after {
-  content: ""; position: absolute; inset: auto -60px -60px auto;
-  width: 260px; height: 260px; border-radius: 50%;
-  background: radial-gradient(circle, rgba(255,255,255,0.18), rgba(255,255,255,0));
-  animation: dashHalo 8s ease-in-out infinite; pointer-events: none;
+  content:""; position:absolute; inset:auto -60px -60px auto;
+  width:260px; height:260px; border-radius:50%;
+  background: radial-gradient(circle, rgba(255,255,255,.18), rgba(255,255,255,0));
+  animation: dashHalo 8s ease-in-out infinite; pointer-events:none;
 }
-.dashboard-hero__main, .dashboard-hero__panel { position: relative; z-index: 1; }
-.hero-chip { display: inline-flex; padding: 5px 12px; border-radius: 999px; font-size: 12px; letter-spacing: 0.06em; background: rgba(255,255,255,0.14); margin-bottom: 14px; }
-.dashboard-hero__main h1 { margin: 12px 0 0; font-size: 36px; line-height: 1.18; }
-.dashboard-hero__panel { display: grid; gap: 12px; padding: 22px; border-radius: 22px; background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.12); backdrop-filter: blur(10px); }
-.hero-panel__label { font-size: 13px; color: rgba(255,255,255,0.64); margin-bottom: 2px; }
-.hero-panel__item { display: flex; justify-content: space-between; align-items: center; padding: 10px 0; border-bottom: 1px solid rgba(255,255,255,0.1); cursor: pointer; }
-.hero-panel__item:last-child { border-bottom: none; }
-.hero-panel__item strong { font-size: 14px; font-weight: 600; }
-.hero-panel__item span { font-size: 12px; color: rgba(255,255,255,0.6); }
-.span-4 { grid-column: span 4; }
-.span-8 { grid-column: span 8; }
-.profile-summary { position: relative; display: grid; justify-items: center; gap: 12px; padding: 12px 0; text-align: center; overflow: hidden; }
-.profile-summary__halo { position: absolute; top: -32px; width: 120px; height: 120px; border-radius: 50%; background: radial-gradient(circle, rgba(20,88,212,.12), rgba(20,88,212,0)); animation: haloFloat 6s ease-in-out infinite; }
-.profile-summary h3, .profile-summary p { position: relative; z-index: 1; margin: 0; }
-.profile-summary p { color: var(--text-secondary); }
-.preference-grid, .dialog-list, .drawer-stack { display: grid; gap: 12px; }
-.preference-card { display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 16px 18px; border-radius: 18px; border: 1px solid var(--border-soft); background: linear-gradient(180deg, #fff, #f8fbff); cursor: pointer; transition: transform .24s ease, box-shadow .24s ease; }
-.preference-card:hover { transform: translateY(-4px); box-shadow: 0 16px 28px rgba(20,33,61,.1); }
-.preference-card p { margin: 4px 0 0; color: var(--text-secondary); font-size: 13px; }
-.dialog-card { padding: 16px; border-radius: 18px; background: linear-gradient(180deg, #fff, #f8fbff); border: 1px solid var(--border-soft); }
-@keyframes haloFloat { 0%,100% { transform: translate3d(0,0,0) scale(1);} 50% { transform: translate3d(0,10px,0) scale(1.08);} }
-@keyframes dashHalo { 0%,100% { transform: translate3d(0,0,0) scale(1); } 50% { transform: translate3d(-20px,-10px,0) scale(1.08); } }
-@media (max-width: 900px) { .dashboard-hero { grid-template-columns: 1fr; } }
-@media (max-width: 1200px) { .span-4, .span-8 { grid-column: span 12; } }
-@media (max-width: 760px) { .preference-card { flex-direction: column; align-items: flex-start; } }
+.dashboard-hero__main, .dashboard-hero__panel { position:relative; z-index:1; }
+.hero-chip { display:inline-flex; padding:5px 12px; border-radius:999px; font-size:12px; letter-spacing:.06em; background:rgba(255,255,255,.14); margin-bottom:14px; }
+.dashboard-hero__main h1 { margin:12px 0 0; font-size:36px; line-height:1.18; }
+.dashboard-hero__panel { display:grid; gap:12px; padding:22px; border-radius:22px; background:rgba(255,255,255,.1); border:1px solid rgba(255,255,255,.12); backdrop-filter:blur(10px); }
+.hero-panel__label { font-size:13px; color:rgba(255,255,255,.64); margin-bottom:2px; }
+.hero-panel__item { display:flex; justify-content:space-between; align-items:center; padding:10px 0; border-bottom:1px solid rgba(255,255,255,.1); cursor:pointer; }
+.hero-panel__item:last-child { border-bottom:none; }
+.hero-panel__item strong { font-size:14px; font-weight:600; }
+.hero-panel__item span { font-size:12px; color:rgba(255,255,255,.6); }
+
+.span-5 { grid-column: span 5; }
+.span-6 { grid-column: span 6; }
+.span-7 { grid-column: span 7; }
+
+.profile-card {
+  display: flex; align-items: center; gap: 24px;
+  padding: 28px; border-radius: 20px; background: #fff;
+  border: 1px solid var(--border-soft); box-shadow: var(--shadow-card);
+}
+.profile-card__avatar { position: relative; flex-shrink: 0; }
+.profile-card__badge {
+  position: absolute; bottom: 2px; right: 2px; width: 14px; height: 14px; border-radius: 50%;
+  border: 2px solid #fff;
+  &.is-user { background: #22c55e; }
+  &.is-admin { background: #f59e0b; }
+  &.is-super { background: #ef4444; }
+}
+.profile-card__info { display: grid; gap: 4px; }
+.profile-card__info h2 { margin: 0; font-size: 22px; font-weight: 700; }
+.profile-card__dept { margin: 2px 0 0; color: var(--text-secondary); font-size: 14px; }
+.profile-card__email { margin: 0; color: var(--text-tertiary); font-size: 13px; }
+
+.info-card {
+  padding: 24px 28px; border-radius: 20px; background: #fff;
+  border: 1px solid var(--border-soft); box-shadow: var(--shadow-card);
+}
+.info-card__title { margin: 0 0 18px; font-size: 16px; font-weight: 700; }
+.info-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+.info-item { display: grid; gap: 4px; }
+.info-item__label { font-size: 12px; color: var(--text-tertiary); }
+.info-item__value { font-size: 14px; font-weight: 500; color: var(--text-primary); }
+
+.action-card {
+  display: flex; align-items: center; gap: 16px;
+  padding: 20px 24px; border-radius: 18px; background: #fff;
+  border: 1px solid var(--border-soft); box-shadow: 0 1px 3px rgba(0,0,0,.04);
+  cursor: pointer; transition: transform .22s ease, box-shadow .22s ease, border-color .22s ease;
+}
+.action-card:hover { transform: translateY(-3px); box-shadow: 0 8px 28px rgba(20,33,61,.1); border-color: var(--border-strong); }
+.action-card--danger:hover { border-color: #fecaca; background: #fef2f2; }
+.action-card--danger:hover strong { color: #dc2626; }
+.action-card__icon { font-size: 28px; flex-shrink: 0; }
+.action-card__text { flex: 1; }
+.action-card__text strong { font-size: 15px; font-weight: 600; }
+.action-card__text p { margin: 2px 0 0; color: var(--text-secondary); font-size: 13px; }
+.action-card__arrow { color: var(--text-tertiary); font-size: 18px; transition: transform .2s; }
+.action-card:hover .action-card__arrow { transform: translateX(3px); color: var(--brand-500); }
+
+.drawer-stack { display: grid; gap: 12px; }
+
+@keyframes dashHalo { 0%,100%{ transform:translate3d(0,0,0) scale(1); } 50%{ transform:translate3d(-20px,-10px,0) scale(1.08); } }
+
+@media (max-width: 1200px) { .span-5, .span-7, .span-6 { grid-column: span 12; } }
+@media (max-width: 900px) { .dashboard-hero { grid-template-columns: 1fr; } .info-grid { grid-template-columns: 1fr; } }
+@media (max-width: 500px) { .profile-card { flex-direction: column; text-align: center; } }
 </style>

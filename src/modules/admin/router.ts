@@ -36,6 +36,12 @@ export const adminRoutes: RouteRecordRaw[] = [
         component: () => import('@/views/admin/SystemManage.vue'),
         meta: { title: '系统设置', requiresAuth: true, requiresAdmin: true },
       },
+      {
+        path: 'tools',
+        name: 'admin-tools',
+        component: () => import('@/views/admin/Tools.vue'),
+        meta: { title: '工具箱', requiresAuth: true, requiresAdmin: true },
+      },
     ],
   },
 ]
